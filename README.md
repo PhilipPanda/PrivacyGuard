@@ -1,2 +1,5 @@
-# PrivacyGuard
-PrivacyGuard is a simple, all-in-one privacy extension for Firefox.
+<p align="center">
+  <a">
+    <img src="github/images/logo.png">
+  </a>
+</p> 
