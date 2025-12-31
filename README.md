@@ -20,5 +20,6 @@
 4. The **PrivacyGuard** icon will appear in the toolbar — click it to use the master switch.
 5. To change features, open **Options** from the popup (or go to `about:addons` → PrivacyGuard → **Preferences/Options**).
 
+---
 
 
