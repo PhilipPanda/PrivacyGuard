@@ -12,3 +12,15 @@
   <img src="https://img.shields.io/badge/Platform-Firefox-42A5F5?style=for-the-badge&logo=firefoxbrowser&logoColor=white">
 </p>
 
+---
+### PrivacyGuard is a simple, all-in-one privacy extension for Firefox.
+---
+
+1. Open Firefox and go to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on…**.
+3. Select your extension’s `manifest.json` file.
+4. The **PrivacyGuard** icon will appear in the toolbar — click it to use the master switch.
+5. To change features, open **Options** from the popup (or go to `about:addons` → PrivacyGuard → **Preferences/Options**).
+
+
+
