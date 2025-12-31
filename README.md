@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="github/images/logo.png" width="256" height="256" alt="PrivacyGuard Logo">
+  <img src="github/images/banner.png" alt="PrivacyGuard Logo">
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/JavaScript-1E88E5?style=for-the-badge&logo=javascript&logoColor=white">
