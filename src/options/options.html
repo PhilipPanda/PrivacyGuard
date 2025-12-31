@@ -2,10 +2,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>PrivacyGuard Settings</title>
+    <title>PrivacyGuard | Settings</title>
     <link rel="stylesheet" href="options.css" />
+    <link rel="icon" type="image/x-icon" href="../../assets/icons/icon-128.png" />
   </head>
   <body>
+    <div id="pgParticles" aria-hidden="true"></div>
+
     <div class="page">
       <header class="header">
         <h1>PrivacyGuard Settings</h1>
@@ -29,18 +32,16 @@
               <div class="label">Ad Blocking</div>
               <div class="badgeExperimental">⚠️ EXPERIMENTAL</div>
             </div>
-            <div class="hint">
-              Blocks requests to known ad/tracker domains. May break some sites.
-            </div>
+            <div class="hint">Blocks requests to known ad/tracker domains. May break some sites.</div>
           </div>
           <input id="blockAds" class="toggle" type="checkbox" />
         </div>
 
         <div class="row rowStack">
           <div class="status" id="adblockStatus">Loading adblock status…</div>
-
           <div class="btnRow">
             <button class="btnSecondary" id="refreshAdblock">Update Blocklists</button>
+            <button class="btnSecondary" id="openCanYouBlockIt">Open CanYouBlockIt Test</button>
           </div>
         </div>
 
@@ -66,23 +67,77 @@
             and
             <input id="decoyMaxInterval" class="miniInput" type="text" placeholder="2h" />
           </div>
-
-          <div class="note">
-            Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code>
-          </div>
-
+          <div class="note">Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code></div>
           <div class="status">Sites (one per line, domains only):</div>
           <textarea id="decoySites" class="textArea" rows="6" spellcheck="false"></textarea>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Proxy</div>
+              <div class="badgeExperimental">⚠️ EXPERIMENTAL</div>
+            </div>
+            <div class="hint">Routes browser traffic through a proxy.</div>
+          </div>
+          <input id="proxyEnabled" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Type:
+            <select id="proxyType" class="select">
+              <option value="socks">SOCKS5</option>
+              <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
+            </select>
+          </div>
+
+          <div class="status">
+            Host:
+            <input id="proxyHost" class="miniInputWide" type="text" placeholder="127.0.0.1" />
+            Port:
+            <input id="proxyPort" class="miniInput" type="number" min="1" max="65535" />
+          </div>
+
+          <div class="status">
+            Username:
+            <input id="proxyUsername" class="miniInputWide" type="text" placeholder="" />
+            Password:
+            <input id="proxyPassword" class="miniInputWide" type="password" placeholder="" />
+          </div>
+
+          <div class="status">
+            <label class="checkRow">
+              <input id="proxyDNS" type="checkbox" />
+              Proxy DNS (recommended for SOCKS5)
+            </label>
+          </div>
+
+          <div class="status" id="proxyStatus">Proxy status: unknown</div>
 
           <div class="note">
-            Tip: keep this list small and normal. PrivacyGuard fetches lightweight paths like
-            <code>/robots.txt</code> and <code>/favicon.ico</code>.
+            If applying the proxy fails, go to <code>about:addons</code> → PrivacyGuard → “Run in Private Windows” = Allow.
           </div>
         </div>
 
         <div class="divider"></div>
 
-               <div class="row">
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Anti-fingerprinting</div>
+            </div>
+            <div class="hint">Sends privacy signals and blocks some fingerprinting scripts.</div>
+          </div>
+          <input id="antiFingerprint" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
           <div class="left">
             <div class="label">Always HTTPS</div>
             <div class="hint">Upgrade http:// links to https:// automatically</div>
@@ -102,7 +157,6 @@
 
         <div class="divider"></div>
 
-        <!-- ✅ Maintenance -->
         <div class="row">
           <div class="left">
             <div class="label">Maintenance</div>
@@ -111,9 +165,7 @@
         </div>
 
         <div class="row rowStack">
-          <div class="note">
-            Clearing cookies will sign you out of most websites.
-          </div>
+          <div class="note">Clearing cookies will sign you out of most websites.</div>
           <div class="btnRow">
             <button class="btnDanger" id="clearCookies">Clear All Cookies</button>
           </div>
@@ -126,6 +178,7 @@
     </div>
 
     <script src="../common/constants.js"></script>
+    <script src="../../assets/vendor/particles.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

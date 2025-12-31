@@ -1,3 +1,6 @@
+const PG_ICON_ON = "../../assets/icons/icon-1024-on.png";
+const PG_ICON_OFF = "../../assets/icons/icon-1024-off.png";
+
 async function pgGetSettings() {
   const res = await browser.runtime.sendMessage({
     type: PrivacyGuardConstants.MSG.GET_SETTINGS
@@ -12,6 +15,46 @@ async function pgSetSettings(changes) {
   });
 }
 
+function pgForceParticlesLayerPopup() {
+  const p = document.getElementById("pgParticles");
+  if (p) {
+    p.style.cssText = "position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;margin:0;padding:0;overflow:hidden;display:block;";
+  }
+
+  const mo = new MutationObserver(() => {
+    if (!p) return;
+    const c = p.querySelector("canvas");
+    if (!c) return;
+    c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;";
+  });
+
+  if (p) mo.observe(p, { childList: true, subtree: true });
+}
+
+function pgInitParticlesPopup() {
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;
+  if (!window.particlesJS) return;
+
+  window.particlesJS("pgParticles", {
+    particles: {
+      number: { value: 140, density: { enable: true, value_area: 650 } },
+      color: { value: "#ffffff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.6, random: true },
+      size: { value: 2.0, random: true },
+      line_linked: { enable: true, distance: 110, color: "#ffffff", opacity: 0.35, width: 1 },
+      move: { enable: true, speed: 0.85, direction: "none", random: false, straight: false, out_mode: "out" }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: { onhover: { enable: false }, onclick: { enable: false }, resize: true }
+    },
+    retina_detect: true
+  });
+}
+
+
 function pgSetUIEnabled(isEnabled) {
   const pill = document.getElementById("statusPill");
   if (pill) {
@@ -24,14 +67,8 @@ function pgSetUIEnabled(isEnabled) {
 
   const img = document.getElementById("masterIcon");
   if (img) {
-    const nextSrc = isEnabled
-      ? "../../assets/icons/icon-1024-on.png"
-      : "../../assets/icons/icon-1024-off.png";
-
-    if (img.src && img.src.endsWith(nextSrc)) return;
-
+    const nextSrc = isEnabled ? PG_ICON_ON : PG_ICON_OFF;
     img.classList.add("isFading");
-
     setTimeout(() => {
       img.src = nextSrc;
       requestAnimationFrame(() => img.classList.remove("isFading"));
@@ -45,6 +82,8 @@ async function pgLoadPopup() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  pgForceParticlesLayerPopup();
+  pgInitParticlesPopup();
   await pgLoadPopup();
 
   const masterBtn = document.getElementById("masterBtn");

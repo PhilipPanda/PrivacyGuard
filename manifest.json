@@ -1,23 +1,29 @@
 {
   "manifest_version": 2,
   "name": "PrivacyGuard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Your go-to privacy tool for Firefox.",
   "icons": {
     "48": "assets/icons/icon-48.png",
-    "96": "assets/icons/icon-96.png",
-    "128": "assets/icons/icon-128.png"
+    "96": "assets/icons/icon-96.png"
   },
-   "permissions": [
+  "permissions": [
     "storage",
     "tabs",
     "alarms",
     "cookies",
     "browsingData",
+    "proxy",
     "webRequest",
     "webRequestBlocking",
     "<all_urls>"
   ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "privacyguard@philippanda.local",
+      "strict_min_version": "91.1.0"
+    }
+  },
   "background": {
     "scripts": [
       "src/common/constants.js",
@@ -26,6 +32,9 @@
       "src/background/modules/https_upgrade.js",
       "src/background/modules/url_cleaner.js",
       "src/background/modules/decoy_traffic.js",
+      "src/background/modules/proxy_manager.js",
+      "src/background/modules/anti_fingerprint.js",
+      "src/background/modules/http_warning.js",
       "src/background/messaging.js",
       "src/background/index.js"
     ]
@@ -37,5 +46,11 @@
   "options_ui": {
     "page": "src/options/options.html",
     "open_in_tab": true
-  }
+  },
+  "web_accessible_resources": [
+    "src/warning/http_warning.html",
+    "src/warning/http_warning.css",
+    "src/warning/http_warning.js",
+    "src/common/constants.js"
+  ]
 }

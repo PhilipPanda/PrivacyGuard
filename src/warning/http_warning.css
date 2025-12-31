@@ -1,0 +1,164 @@
+:root{
+  --bg: #0b1220;
+  --panel: rgba(255,255,255,.06);
+  --panel2: rgba(255,255,255,.04);
+  --border: rgba(255,255,255,.10);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.62);
+  --blue: #2b7cff;
+  --shadow: 0 12px 30px rgba(0,0,0,.45);
+  --radius: 18px;
+
+  --danger: #ff4d4d;
+  --dangerBg: rgba(255, 77, 77, .12);
+  --dangerBorder: rgba(255, 77, 77, .35);
+}
+
+*{ box-sizing: border-box; }
+
+html, body{
+  height: 100%;
+}
+
+body{
+  margin: 0;
+  min-height: 100vh;
+  font: 14px system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+.page{
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 18px 22px;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.card{
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 18px 16px;
+  backdrop-filter: blur(8px);
+}
+
+.badge{
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--danger);
+  background: var(--dangerBg);
+  border: 1px solid var(--dangerBorder);
+}
+
+h1{
+  margin: 12px 0 6px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: .2px;
+}
+
+.sub{
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.box{
+  margin-top: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.20);
+  border-radius: 14px;
+  padding: 12px 12px;
+}
+
+.label{
+  font-size: 12px;
+  color: rgba(255,255,255,.72);
+  margin: 0 0 6px;
+  font-weight: 800;
+}
+
+.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: rgba(210,228,255,.95);
+  word-break: break-all;
+}
+
+.btnRow{
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+button{
+  font: inherit;
+}
+
+.btnSecondary{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(43,124,255,.35);
+  background: rgba(43,124,255,.12);
+  color: rgba(210,228,255,.95);
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .08s ease, filter .12s ease;
+}
+
+.btnSecondary:hover{ filter: brightness(1.05); }
+.btnSecondary:active{ transform: translateY(1px); }
+.btnSecondary:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.btnDanger{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 77, 77, .40);
+  background: rgba(255, 77, 77, .14);
+  color: rgba(255, 215, 215, .98);
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform .08s ease, filter .12s ease;
+}
+
+.btnDanger:hover{ filter: brightness(1.06); }
+.btnDanger:active{ transform: translateY(1px); }
+.btnDanger:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.note{
+  margin-top: 12px;
+  color: rgba(255,255,255,.55);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+b{
+  color: rgba(255,255,255,.92);
+}
+
+code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: rgba(210,228,255,.95);
+}

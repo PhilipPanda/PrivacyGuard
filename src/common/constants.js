@@ -9,8 +9,8 @@ var PrivacyGuardConstants = {
     blockAds: true,
 
     decoyTraffic: false,
-    decoyMinInterval: "1s",
-    decoyMaxInterval: "24h",
+    decoyMinInterval: "30m",
+    decoyMaxInterval: "2h",
     decoySites: [
       "wikipedia.org",
       "mozilla.org",
@@ -18,11 +18,20 @@ var PrivacyGuardConstants = {
       "reuters.com",
       "theguardian.com",
       "apnews.com",
-      "nytimes.com",
       "nasa.gov",
       "who.int",
       "openstreetmap.org"
     ],
+
+    proxyEnabled: false,
+    proxyType: "socks",
+    proxyHost: "",
+    proxyPort: 1080,
+    proxyUsername: "",
+    proxyPassword: "",
+    proxyDNS: true,
+
+    antiFingerprint: false,
 
     blockTrackers: false,
     blockThirdPartyCookies: false
@@ -50,6 +59,8 @@ var PrivacyGuardConstants = {
     SET_SETTINGS: "SET_SETTINGS",
 
     ADBLOCK_GET_STATUS: "ADBLOCK_GET_STATUS",
-    ADBLOCK_UPDATE: "ADBLOCK_UPDATE"
+    ADBLOCK_UPDATE: "ADBLOCK_UPDATE",
+
+    HTTPWARN_ALLOW_ONCE: "HTTPWARN_ALLOW_ONCE"
   }
 };

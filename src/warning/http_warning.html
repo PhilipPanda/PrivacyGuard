@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PrivacyGuard | Warning</title>
+    <link rel="stylesheet" href="http_warning.css" />
+    <link rel="icon" type="image/x-icon" href="../../assets/icons/icon-128.png" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="card">
+        <div class="badge">HTTP WARNING</div>
+        <h1>Connection is not secure</h1>
+        <p class="sub">
+          This site is using <span class="mono">http://</span>. Your traffic may be visible or modified on the network.
+        </p>
+
+        <div class="box">
+          <div class="label">Destination</div>
+          <div id="dest" class="mono"></div>
+        </div>
+
+        <div class="btnRow">
+          <button id="goBack" class="btnSecondary" type="button">Go Back</button>
+          <button id="tryHttps" class="btnSecondary" type="button">Try HTTPS</button>
+          <button id="continue" class="btnDanger" type="button">Continue</button>
+        </div>
+
+        <div class="note">
+          Tip: Turn on <b>Always HTTPS</b> in PrivacyGuard to auto-upgrade links.
+        </div>
+      </div>
+    </div>
+
+    <script src="../common/constants.js"></script>
+    <script src="http_warning.js"></script>
+  </body>
+</html>
