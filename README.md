@@ -1,8 +1,6 @@
 <p align="center">
-  <a">
-    <img src="github/images/logo.png">
-  </a>
-</p> 
+  <img src="github/images/logo.png" width="256" height="256" alt="PrivacyGuard Logo">
+</p>
 <p align="center">
   <img src="https://img.shields.io/badge/JavaScript-1E88E5?style=for-the-badge&logo=javascript&logoColor=white">
   <img src="https://img.shields.io/badge/Firefox%20Extension-1565C0?style=for-the-badge&logo=firefoxbrowser&logoColor=white">
