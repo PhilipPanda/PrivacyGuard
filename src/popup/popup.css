@@ -1,0 +1,101 @@
+:root{
+  --bg: #0b1220;
+  --panel: rgba(255,255,255,.06);
+  --panel2: rgba(255,255,255,.04);
+  --border: rgba(255,255,255,.12);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.60);
+  --blue: #2b7cff;
+  --shadow: 0 16px 40px rgba(0,0,0,.55);
+  --radius: 18px;
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  width: 320px;
+  min-height: 280px;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.wrap{
+  padding: 14px 14px 12px;
+}
+
+.top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom: 12px;
+}
+
+.title{
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+.pill{
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(43,124,255,.35);
+  background: rgba(43,124,255,.14);
+  color: rgba(210,228,255,.95);
+  opacity: .65;
+}
+
+.master{
+  width: 180px;
+  height: 180px;
+  margin: 12px auto 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: radial-gradient(circle at 30% 20%, rgba(43,124,255,.18), rgba(255,255,255,.03));
+  box-shadow: var(--shadow);
+
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+
+.master:active{
+  transform: translateY(1px);
+}
+
+.masterIcon{
+  width: 132px;
+  height: 132px;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+.masterIcon.isFading{
+  opacity: 0;
+}
+
+.btn{
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(43,124,255,.35);
+  background: rgba(43,124,255,.14);
+  color: rgba(210,228,255,.98);
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .08s ease, filter .12s ease;
+}
+
+.btn:hover{ filter: brightness(1.05); }
+.btn:active{ transform: translateY(1px); }

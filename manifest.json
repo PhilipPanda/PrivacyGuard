@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "PrivacyGuard",
+  "version": "0.1.0",
+  "description": "Your go-to privacy tool for Firefox.",
+  "icons": {
+    "48": "assets/icons/icon-48.png",
+    "96": "assets/icons/icon-96.png",
+    "128": "assets/icons/icon-128.png"
+  },
+   "permissions": [
+    "storage",
+    "tabs",
+    "alarms",
+    "cookies",
+    "browsingData",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "src/common/constants.js",
+      "src/background/settings.js",
+      "src/background/modules/adblocker.js",
+      "src/background/modules/https_upgrade.js",
+      "src/background/modules/url_cleaner.js",
+      "src/background/modules/decoy_traffic.js",
+      "src/background/messaging.js",
+      "src/background/index.js"
+    ]
+  },
+  "browser_action": {
+    "default_title": "PrivacyGuard",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  }
+}

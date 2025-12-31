@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PrivacyGuard</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div class="title">PrivacyGuard</div>
+        <div id="statusPill" class="pill">OFF</div>
+      </div>
+
+      <button id="masterBtn" class="master" type="button" aria-pressed="false">
+        <img id="masterIcon" class="masterIcon" alt="PrivacyGuard status" />
+      </button>
+
+      <button id="openOptions" class="btn" type="button">Open Options</button>
+    </div>
+
+    <script src="../common/constants.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

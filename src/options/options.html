@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>PrivacyGuard Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <h1>PrivacyGuard Settings</h1>
+        <p class="sub">Control PrivacyGuard’s core behavior.</p>
+      </header>
+
+      <main class="card">
+        <div class="row">
+          <div class="left">
+            <div class="label">Enabled</div>
+            <div class="hint">Master switch for all PrivacyGuard features</div>
+          </div>
+          <input id="enabled" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Ad Blocking</div>
+              <div class="badgeExperimental">⚠️ EXPERIMENTAL</div>
+            </div>
+            <div class="hint">
+              Blocks requests to known ad/tracker domains. May break some sites.
+            </div>
+          </div>
+          <input id="blockAds" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status" id="adblockStatus">Loading adblock status…</div>
+
+          <div class="btnRow">
+            <button class="btnSecondary" id="refreshAdblock">Update Blocklists</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Decoy Traffic</div>
+            </div>
+            <div class="hint">
+              Generates small background HTTPS requests to blend your traffic pattern.
+              Uses bandwidth and does not make you anonymous.
+            </div>
+          </div>
+          <input id="decoyTraffic" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Interval (random): between
+            <input id="decoyMinInterval" class="miniInput" type="text" placeholder="10m" />
+            and
+            <input id="decoyMaxInterval" class="miniInput" type="text" placeholder="2h" />
+          </div>
+
+          <div class="note">
+            Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code>
+          </div>
+
+          <div class="status">Sites (one per line, domains only):</div>
+          <textarea id="decoySites" class="textArea" rows="6" spellcheck="false"></textarea>
+
+          <div class="note">
+            Tip: keep this list small and normal. PrivacyGuard fetches lightweight paths like
+            <code>/robots.txt</code> and <code>/favicon.ico</code>.
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+               <div class="row">
+          <div class="left">
+            <div class="label">Always HTTPS</div>
+            <div class="hint">Upgrade http:// links to https:// automatically</div>
+          </div>
+          <input id="alwaysHTTPS" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="label">Strip tracking params</div>
+            <div class="hint">Remove UTM, fbclid, gclid, and similar parameters</div>
+          </div>
+          <input id="stripUTMParams" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ✅ Maintenance -->
+        <div class="row">
+          <div class="left">
+            <div class="label">Maintenance</div>
+            <div class="hint">Quick privacy cleanup actions</div>
+          </div>
+        </div>
+
+        <div class="row rowStack">
+          <div class="note">
+            Clearing cookies will sign you out of most websites.
+          </div>
+          <div class="btnRow">
+            <button class="btnDanger" id="clearCookies">Clear All Cookies</button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <div class="footerText">PrivacyGuard • Options</div>
+      </footer>
+    </div>
+
+    <script src="../common/constants.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
