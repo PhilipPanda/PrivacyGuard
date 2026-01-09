@@ -5,9 +5,9 @@ var pgHttpsSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS);
 (async () => {
   try {
     pgHttpsSettings = await pgGetSettings();
-    console.log("[PrivacyGuard] https_upgrade settings loaded", pgHttpsSettings);
+    console.log("[PrivacyGuard] https_upgrade: settings loaded");
   } catch (e) {
-    console.warn("[PrivacyGuard] https_upgrade failed to load settings, using defaults", e);
+    console.warn("[PrivacyGuard] https_upgrade: failed to load settings, using defaults", e);
   }
 })();
 
@@ -46,17 +46,25 @@ function pgUpgradeToHttps(urlString) {
 
 browser.webRequest.onBeforeRequest.addListener(
   (details) => {
-    if (details.type !== "main_frame") return {};
+    try {
+      if (!details || details.type !== "main_frame") return {};
 
-    if (details.method && details.method !== "GET") return {};
+      if (details.method && details.method !== "GET") return {};
 
-    const s = pgHttpsSettings;
-    if (!s.enabled || !s.alwaysHTTPS) return {};
+      if (!details.url) return {};
 
-    const upgraded = pgUpgradeToHttps(details.url);
-    if (!upgraded || upgraded === details.url) return {};
+      const s = pgHttpsSettings;
+      if (!s || !s.enabled || !s.alwaysHTTPS) return {};
 
-    return { redirectUrl: upgraded };
+      const upgraded = pgUpgradeToHttps(details.url);
+      if (!upgraded || upgraded === details.url) return {};
+
+      console.log("[PrivacyGuard] https_upgrade: upgraded", details.url, "->", upgraded);
+      return { redirectUrl: upgraded };
+    } catch (e) {
+      console.warn("[PrivacyGuard] https_upgrade: error processing request", details?.url, e);
+      return {};
+    }
   },
   { urls: ["<all_urls>"] },
   ["blocking"]

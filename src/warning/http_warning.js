@@ -20,54 +20,86 @@ async function pgGetTabIdFallback() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const originalUrl = pgGetParam("url") || "";
-  const tabIdParam = Number(pgGetParam("tabId"));
-  const tabId = Number.isFinite(tabIdParam) && tabIdParam >= 0 ? tabIdParam : await pgGetTabIdFallback();
+  try {
+    const originalUrl = pgGetParam("url") || "";
+    const tabIdParam = Number(pgGetParam("tabId"));
+    const tabId = Number.isFinite(tabIdParam) && tabIdParam >= 0 ? tabIdParam : await pgGetTabIdFallback();
 
-  const dest = document.getElementById("dest");
-  if (dest) dest.textContent = originalUrl;
+    const dest = document.getElementById("dest");
+    if (dest) {
+      dest.textContent = originalUrl || "Unknown URL";
+    }
 
-  const goBack = document.getElementById("goBack");
-  const tryHttps = document.getElementById("tryHttps");
-  const cont = document.getElementById("continue");
+    const goBack = document.getElementById("goBack");
+    const tryHttps = document.getElementById("tryHttps");
+    const cont = document.getElementById("continue");
 
-  if (goBack) {
-    goBack.addEventListener("click", async () => {
-      if (Number.isFinite(tabId)) {
+    if (goBack) {
+      goBack.addEventListener("click", async () => {
         try {
-          await browser.tabs.goBack(tabId);
-          return;
-        } catch (e) {}
-        try {
-          await browser.tabs.update(tabId, { url: "about:blank" });
-          return;
-        } catch (e) {}
-      }
-      window.close();
-    });
-  }
-
-  if (tryHttps) {
-    tryHttps.addEventListener("click", async () => {
-      const httpsUrl = pgToHttps(originalUrl);
-      if (!httpsUrl) return;
-      if (Number.isFinite(tabId)) {
-        await browser.tabs.update(tabId, { url: httpsUrl });
-      }
-    });
-  }
-
-  if (cont) {
-    cont.addEventListener("click", async () => {
-      if (!Number.isFinite(tabId) || !originalUrl) return;
-
-      await browser.runtime.sendMessage({
-        type: PrivacyGuardConstants.MSG.HTTPWARN_ALLOW_ONCE,
-        tabId: tabId,
-        url: originalUrl
+          if (Number.isFinite(tabId) && tabId >= 0) {
+            try {
+              await browser.tabs.goBack(tabId);
+              return;
+            } catch (e) {
+              console.warn("[PrivacyGuard] http_warning: goBack failed, trying about:blank", e);
+            }
+            try {
+              await browser.tabs.update(tabId, { url: "about:blank" });
+              return;
+            } catch (e) {
+              console.warn("[PrivacyGuard] http_warning: update to about:blank failed", e);
+            }
+          }
+          window.close();
+        } catch (e) {
+          console.error("[PrivacyGuard] http_warning: goBack handler failed", e);
+          window.close();
+        }
       });
+    }
 
-      await browser.tabs.update(tabId, { url: originalUrl });
-    });
+    if (tryHttps) {
+      tryHttps.addEventListener("click", async () => {
+        try {
+          const httpsUrl = pgToHttps(originalUrl);
+          if (!httpsUrl) {
+            alert("Could not convert URL to HTTPS.");
+            return;
+          }
+          
+          if (Number.isFinite(tabId) && tabId >= 0) {
+            await browser.tabs.update(tabId, { url: httpsUrl });
+          }
+        } catch (e) {
+          console.error("[PrivacyGuard] http_warning: tryHttps handler failed", e);
+          alert("Failed to upgrade to HTTPS. Please try again.");
+        }
+      });
+    }
+
+    if (cont) {
+      cont.addEventListener("click", async () => {
+        try {
+          if (!Number.isFinite(tabId) || tabId < 0 || !originalUrl) {
+            alert("Invalid tab or URL. Cannot continue.");
+            return;
+          }
+
+          await browser.runtime.sendMessage({
+            type: PrivacyGuardConstants.MSG.HTTPWARN_ALLOW_ONCE,
+            tabId: tabId,
+            url: originalUrl
+          });
+
+          await browser.tabs.update(tabId, { url: originalUrl });
+        } catch (e) {
+          console.error("[PrivacyGuard] http_warning: continue handler failed", e);
+          alert("Failed to continue. Please try again.");
+        }
+      });
+    }
+  } catch (e) {
+    console.error("[PrivacyGuard] http_warning: initialization failed", e);
   }
 });

@@ -36,7 +36,9 @@ async function pgSetProxyStatus(obj) {
         obj || {}
       )
     });
-  } catch (e) {}
+  } catch (e) {
+    console.warn("[PrivacyGuard] proxy_manager: failed to save proxy status", e);
+  }
 }
 
 async function pgApplyProxy(s) {
@@ -115,8 +117,15 @@ async function pgApplyProxy(s) {
 (async () => {
   try {
     pgProxySettings = await pgGetSettings();
-  } catch (e) {}
-  await pgApplyProxy(pgProxySettings);
+  } catch (e) {
+    console.warn("[PrivacyGuard] proxy_manager: failed to load settings", e);
+  }
+  
+  try {
+    await pgApplyProxy(pgProxySettings);
+  } catch (e) {
+    console.error("[PrivacyGuard] proxy_manager: failed to apply initial proxy", e);
+  }
 })();
 
 browser.storage.onChanged.addListener(async (changes, area) => {

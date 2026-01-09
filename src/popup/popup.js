@@ -82,29 +82,42 @@ async function pgLoadPopup() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  pgForceParticlesLayerPopup();
-  pgInitParticlesPopup();
-  await pgLoadPopup();
+  try {
+    pgForceParticlesLayerPopup();
+    pgInitParticlesPopup();
+    await pgLoadPopup();
 
-  const masterBtn = document.getElementById("masterBtn");
-  if (masterBtn) {
-    masterBtn.addEventListener("click", async () => {
-      const s = await pgGetSettings();
-      const next = !s.enabled;
-      await pgSetSettings({ enabled: next });
-      pgSetUIEnabled(next);
-    });
-  }
+    const masterBtn = document.getElementById("masterBtn");
+    if (masterBtn) {
+      masterBtn.addEventListener("click", async () => {
+        try {
+          const s = await pgGetSettings();
+          const next = !s.enabled;
+          await pgSetSettings({ enabled: next });
+          pgSetUIEnabled(next);
+        } catch (e) {
+          console.error("[PrivacyGuard] popup: failed to toggle master switch", e);
+          alert("Failed to update settings. Please try again.");
+        }
+      });
+    }
 
-  const openBtn = document.getElementById("openOptions");
-  if (openBtn) {
-    openBtn.addEventListener("click", async () => {
-      if (browser.runtime.openOptionsPage) {
-        await browser.runtime.openOptionsPage();
-      } else {
-        await browser.tabs.create({ url: browser.runtime.getURL("src/options/options.html") });
-      }
-      window.close();
-    });
+    const openBtn = document.getElementById("openOptions");
+    if (openBtn) {
+      openBtn.addEventListener("click", async () => {
+        try {
+          if (browser.runtime.openOptionsPage) {
+            await browser.runtime.openOptionsPage();
+          } else {
+            await browser.tabs.create({ url: browser.runtime.getURL("src/options/options.html") });
+          }
+          window.close();
+        } catch (e) {
+          console.error("[PrivacyGuard] popup: failed to open options", e);
+        }
+      });
+    }
+  } catch (e) {
+    console.error("[PrivacyGuard] popup: initialization failed", e);
   }
 });

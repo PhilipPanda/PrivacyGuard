@@ -21,7 +21,7 @@ var PG_ADBLOCK_ALARM_NAME = "pg-adblock-update";
   try {
     pgAdblockSettings = await pgGetSettings();
   } catch (e) {
-
+    console.warn("[PrivacyGuard] adblocker: failed to load settings", e);
   }
 })();
 
@@ -173,9 +173,28 @@ function pgExtractDomainFromDoublePipe(rest) {
 }
 
 async function pgFetchText(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Fetch failed: " + url + " (" + res.status + ")");
-  return await res.text();
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PrivacyGuardConstants.ADBLOCK_FETCH_TIMEOUT_MS);
+    
+    const res = await fetch(url, { 
+      cache: "no-store",
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeout);
+    
+    if (!res.ok) {
+      throw new Error(`Fetch failed: ${url} (${res.status})`);
+    }
+    
+    return await res.text();
+  } catch (e) {
+    if (e.name === "AbortError") {
+      throw new Error(`Fetch timeout: ${url}`);
+    }
+    throw e;
+  }
 }
 
 async function pgAdblockUpdateLists() {
@@ -191,26 +210,52 @@ async function pgAdblockUpdateLists() {
   pgAdblockDomains = newBlocked;
   pgAdblockAllow = newAllow;
 
+  const errors = [];
+  
   try {
     for (const url of sources) {
-      const txt = await pgFetchText(url);
-
-      pgParseHostsLike(txt);
-      pgParseAdblockNetworkRules(txt);
+      try {
+        const txt = await pgFetchText(url);
+        if (!txt || typeof txt !== "string") {
+          errors.push(`Invalid response from ${url}`);
+          continue;
+        }
+        
+        pgParseHostsLike(txt);
+        pgParseAdblockNetworkRules(txt);
+      } catch (e) {
+        const errorMsg = String(e && e.message ? e.message : e);
+        errors.push(`${url}: ${errorMsg}`);
+        console.warn("[PrivacyGuard] adblocker: failed to fetch/parse", url, e);
+      }
     }
 
-    pgAdblockDomains = newBlocked;
-    pgAdblockAllow = newAllow;
+    // Only update if we got at least some data
+    if (newBlocked.size > 0 || newAllow.size > 0 || errors.length === 0) {
+      pgAdblockDomains = newBlocked;
+      pgAdblockAllow = newAllow;
 
-    pgAdblockStatus.ready = true;
-    pgAdblockStatus.blockedDomains = pgAdblockDomains.size;
-    pgAdblockStatus.allowDomains = pgAdblockAllow.size;
-    pgAdblockStatus.lastUpdated = new Date().toISOString();
+      pgAdblockStatus.ready = true;
+      pgAdblockStatus.blockedDomains = pgAdblockDomains.size;
+      pgAdblockStatus.allowDomains = pgAdblockAllow.size;
+      pgAdblockStatus.lastUpdated = new Date().toISOString();
+      
+      if (errors.length > 0) {
+        pgAdblockStatus.lastError = `Partial update: ${errors.length} source(s) failed`;
+      }
 
-    console.log("[PrivacyGuard] adblock updated:", pgAdblockDomains.size, "blocked /", pgAdblockAllow.size, "allowed");
+      console.log("[PrivacyGuard] adblock updated:", pgAdblockDomains.size, "blocked /", pgAdblockAllow.size, "allowed");
+    } else {
+      // Restore old data if all sources failed
+      pgAdblockDomains = oldBlocked;
+      pgAdblockAllow = oldAllow;
+      pgAdblockStatus.lastError = `All sources failed: ${errors.join("; ")}`;
+      throw new Error(pgAdblockStatus.lastError);
+    }
+
     return pgAdblockGetStatus();
   } catch (e) {
-
+    // Restore old data on complete failure
     pgAdblockDomains = oldBlocked;
     pgAdblockAllow = oldAllow;
 
@@ -251,20 +296,72 @@ function pgIsBlockedHost(host) {
   return pgHostMatchesSet(host, pgAdblockDomains);
 }
 
+// Hardcoded allow list for sites that need all their resources
+var PG_ADBLOCK_ALWAYS_ALLOW = new Set([
+  "canyoublockit.com",
+  "www.canyoublockit.com"
+]);
+
+function pgIsAlwaysAllowed(hostname) {
+  if (!hostname) return false;
+  hostname = hostname.toLowerCase();
+  
+  // Check exact match
+  if (PG_ADBLOCK_ALWAYS_ALLOW.has(hostname)) return true;
+  
+  // Check subdomain matches
+  for (const allowed of PG_ADBLOCK_ALWAYS_ALLOW) {
+    if (hostname === allowed || hostname.endsWith("." + allowed)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 browser.webRequest.onBeforeRequest.addListener(
   (details) => {
-    const s = pgAdblockSettings;
-    if (!s.enabled || !s.blockAds) return {};
-
     try {
+      const s = pgAdblockSettings;
+      if (!s || !s.enabled || !s.blockAds) return {};
+
+      // Only block if adblock is ready
+      if (!pgAdblockStatus.ready) return {};
+
+      // NEVER block main_frame requests (the actual page)
+      if (details.type === "main_frame") return {};
+
+      // Skip non-HTTP(S) requests
+      if (!details.url || (!details.url.startsWith("http://") && !details.url.startsWith("https://"))) {
+        return {};
+      }
+
       const u = new URL(details.url);
       if (u.protocol !== "http:" && u.protocol !== "https:") return {};
 
-      if (pgIsBlockedHost(u.hostname)) {
+      const hostname = u.hostname.toLowerCase();
+      
+      // Skip localhost and local IPs
+      if (pgIsLocalish(hostname)) return {};
+
+      // Check hardcoded allow list first (for sites like canyoublockit.com)
+      if (pgIsAlwaysAllowed(hostname)) {
+        return {};
+      }
+
+      // Check allow list (from filter lists)
+      if (pgHostMatchesSet(hostname, pgAdblockAllow)) {
+        return {};
+      }
+
+      // Then check block list
+      if (pgIsBlockedHost(hostname)) {
+        console.log("[PrivacyGuard] adblocker: blocked", details.type, details.url);
         return { cancel: true };
       }
     } catch (e) {
-      return {};
+      // Silently fail to avoid breaking page loads
+      console.warn("[PrivacyGuard] adblocker: error checking URL", details.url, e);
     }
 
     return {};
@@ -275,13 +372,21 @@ browser.webRequest.onBeforeRequest.addListener(
 
 function pgEnsureAdblockAlarm() {
   try {
-    browser.alarms.create(PG_ADBLOCK_ALARM_NAME, { periodInMinutes: 60 * 24 });
-  } catch (e) {}
+    browser.alarms.create(PG_ADBLOCK_ALARM_NAME, { 
+      periodInMinutes: PrivacyGuardConstants.ADBLOCK_UPDATE_INTERVAL_MINUTES 
+    });
+  } catch (e) {
+    console.warn("[PrivacyGuard] adblocker: failed to create alarm", e);
+  }
 }
 
-browser.alarms.onAlarm.addListener((alarm) => {
+browser.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm && alarm.name === PG_ADBLOCK_ALARM_NAME) {
-    pgAdblockUpdateLists();
+    try {
+      await pgAdblockUpdateLists();
+    } catch (e) {
+      console.error("[PrivacyGuard] adblocker: alarm update failed", e);
+    }
   }
 });
 

@@ -139,6 +139,82 @@
 
         <div class="row">
           <div class="left">
+            <div class="labelRow">
+              <div class="label">Referrer Manager</div>
+            </div>
+            <div class="hint">Controls what referrer information is sent to websites.</div>
+          </div>
+          <input id="manageReferrer" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Mode:
+            <select id="referrerMode" class="select">
+              <option value="no-referrer">No Referrer</option>
+              <option value="same-origin">Same Origin Only</option>
+              <option value="origin">Origin Only</option>
+              <option value="strict-origin">Strict Origin</option>
+            </select>
+          </div>
+          <div class="note">
+            <b>No Referrer:</b> Never send referrer header<br>
+            <b>Same Origin Only:</b> Send referrer only for same-domain requests<br>
+            <b>Origin Only:</b> Send only domain, not full URL<br>
+            <b>Strict Origin:</b> Send origin for same-origin, none for cross-origin
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">User-Agent Manager</div>
+            </div>
+            <div class="hint">Spoof or randomize your browser's user-agent string to prevent fingerprinting.</div>
+          </div>
+          <input id="manageUserAgent" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Mode:
+            <select id="userAgentMode" class="select">
+              <option value="random">Random</option>
+              <option value="firefox">Firefox</option>
+              <option value="chrome">Chrome</option>
+              <option value="safari">Safari</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="status" id="customUserAgentContainer" style="display: none;">
+            Custom User-Agent:
+            <input id="customUserAgent" class="miniInputWide" type="text" placeholder="Mozilla/5.0..." style="width: 100%; margin-top: 6px;" />
+          </div>
+          <div class="note">
+            <b>Random:</b> Randomly selects a user-agent for each page<br>
+            <b>Firefox/Chrome/Safari:</b> Spoofs as that browser<br>
+            <b>Custom:</b> Use your own user-agent string
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Block Third-Party Cookies</div>
+            </div>
+            <div class="hint">Prevents cookies from third-party domains. May break some login features.</div>
+          </div>
+          <input id="blockThirdPartyCookies" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
             <div class="label">Always HTTPS</div>
             <div class="hint">Upgrade http:// links to https:// automatically</div>
           </div>

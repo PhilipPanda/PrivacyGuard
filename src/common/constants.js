@@ -1,5 +1,8 @@
 var PrivacyGuardConstants = {
   STORAGE_KEY: "settings",
+  
+  VERSION: "0.1.2",
+  EXTENSION_NAME: "PrivacyGuard",
 
   DEFAULT_SETTINGS: {
     enabled: true,
@@ -33,8 +36,18 @@ var PrivacyGuardConstants = {
 
     antiFingerprint: false,
 
+    manageReferrer: false,
+    referrerMode: "no-referrer",
+
+    manageUserAgent: false,
+    userAgentMode: "random",
+    customUserAgent: "",
+
     blockTrackers: false,
-    blockThirdPartyCookies: false
+    blockThirdPartyCookies: false,
+    
+    autoDeleteCookies: false,
+    cookieLifetime: "7d"
   },
 
   ADBLOCK_SOURCES: [
@@ -54,6 +67,9 @@ var PrivacyGuardConstants = {
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-others.txt"
   ],
 
+  ADBLOCK_UPDATE_INTERVAL_MINUTES: 60 * 24, // 24 hours
+  ADBLOCK_FETCH_TIMEOUT_MS: 30000, // 30 seconds
+
   MSG: {
     GET_SETTINGS: "GET_SETTINGS",
     SET_SETTINGS: "SET_SETTINGS",
@@ -62,5 +78,11 @@ var PrivacyGuardConstants = {
     ADBLOCK_UPDATE: "ADBLOCK_UPDATE",
 
     HTTPWARN_ALLOW_ONCE: "HTTPWARN_ALLOW_ONCE"
-  }
+  },
+  
+  HTTP_WARN_BYPASS_TIMEOUT_MS: 30000, // 30 seconds
+  
+  DECOY_REQUEST_TIMEOUT_MS: 8000, // 8 seconds
+  DECOY_MIN_INTERVAL_SECONDS: 1,
+  DECOY_MAX_INTERVAL_SECONDS: 7 * 86400, // 7 days
 };

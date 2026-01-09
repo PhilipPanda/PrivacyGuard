@@ -133,12 +133,6 @@ function pgInitParticles() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  pgInitParticles();
-  await pgLoadOptions();
-});
-
-
 async function pgLoadProxyStatus() {
   const el = document.getElementById("proxyStatus");
   if (!el) return;
@@ -211,6 +205,30 @@ async function pgLoadOptions() {
   const antiFpEl = document.getElementById("antiFingerprint");
   if (antiFpEl) antiFpEl.checked = !!s.antiFingerprint;
 
+  const manageReferrerEl = document.getElementById("manageReferrer");
+  if (manageReferrerEl) manageReferrerEl.checked = !!s.manageReferrer;
+
+  const referrerModeEl = document.getElementById("referrerMode");
+  if (referrerModeEl) referrerModeEl.value = String(s.referrerMode || "no-referrer");
+
+  const manageUserAgentEl = document.getElementById("manageUserAgent");
+  if (manageUserAgentEl) manageUserAgentEl.checked = !!s.manageUserAgent;
+
+  const userAgentModeEl = document.getElementById("userAgentMode");
+  if (userAgentModeEl) {
+    userAgentModeEl.value = String(s.userAgentMode || "random");
+    const customContainer = document.getElementById("customUserAgentContainer");
+    if (customContainer) {
+      customContainer.style.display = userAgentModeEl.value === "custom" ? "block" : "none";
+    }
+  }
+
+  const customUserAgentEl = document.getElementById("customUserAgent");
+  if (customUserAgentEl) customUserAgentEl.value = String(s.customUserAgent || "");
+
+  const blockThirdPartyCookiesEl = document.getElementById("blockThirdPartyCookies");
+  if (blockThirdPartyCookiesEl) blockThirdPartyCookiesEl.checked = !!s.blockThirdPartyCookies;
+
   const statusEl = document.getElementById("adblockStatus");
   if (statusEl) {
     const st = await pgGetAdblockStatus();
@@ -244,7 +262,12 @@ async function pgClearAllCookies() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await pgLoadOptions();
+  try {
+    pgInitParticles();
+    await pgLoadOptions();
+  } catch (e) {
+    console.error("[PrivacyGuard] options: initialization failed", e);
+  }
 
   const enabledEl = document.getElementById("enabled");
   if (enabledEl) enabledEl.addEventListener("change", (e) => pgSaveOptions({ enabled: e.target.checked }));
@@ -264,6 +287,42 @@ document.addEventListener("DOMContentLoaded", async () => {
   const antiFpEl = document.getElementById("antiFingerprint");
   if (antiFpEl) antiFpEl.addEventListener("change", (e) => pgSaveOptions({ antiFingerprint: e.target.checked }));
 
+  const manageReferrerEl = document.getElementById("manageReferrer");
+  if (manageReferrerEl) manageReferrerEl.addEventListener("change", (e) => pgSaveOptions({ manageReferrer: e.target.checked }));
+
+  const referrerModeEl = document.getElementById("referrerMode");
+  if (referrerModeEl) referrerModeEl.addEventListener("change", (e) => pgSaveOptions({ referrerMode: e.target.value }));
+
+  const manageUserAgentEl = document.getElementById("manageUserAgent");
+  if (manageUserAgentEl) manageUserAgentEl.addEventListener("change", (e) => pgSaveOptions({ manageUserAgent: e.target.checked }));
+
+  const userAgentModeEl = document.getElementById("userAgentMode");
+  if (userAgentModeEl) {
+    userAgentModeEl.addEventListener("change", (e) => {
+      const customContainer = document.getElementById("customUserAgentContainer");
+      if (customContainer) {
+        customContainer.style.display = e.target.value === "custom" ? "block" : "none";
+      }
+      pgSaveOptions({ userAgentMode: e.target.value });
+    });
+  }
+
+  const customUserAgentEl = document.getElementById("customUserAgent");
+  if (customUserAgentEl) {
+    customUserAgentEl.addEventListener("blur", (e) => {
+      pgSaveOptions({ customUserAgent: e.target.value });
+    });
+    customUserAgentEl.addEventListener("input", (e) => {
+      clearTimeout(customUserAgentEl.saveTimer);
+      customUserAgentEl.saveTimer = setTimeout(() => {
+        pgSaveOptions({ customUserAgent: e.target.value });
+      }, 600);
+    });
+  }
+
+  const blockThirdPartyCookiesEl = document.getElementById("blockThirdPartyCookies");
+  if (blockThirdPartyCookiesEl) blockThirdPartyCookiesEl.addEventListener("change", (e) => pgSaveOptions({ blockThirdPartyCookies: e.target.checked }));
+
   const minEl = document.getElementById("decoyMinInterval");
   const maxEl = document.getElementById("decoyMaxInterval");
 
@@ -276,8 +335,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (minSec === null) minSec = pgParseDurationToSeconds(PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMinInterval);
     if (maxSec === null) maxSec = pgParseDurationToSeconds(PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMaxInterval);
 
-    minSec = clamp(minSec, 1, 7 * 86400);
-    maxSec = clamp(maxSec, 1, 7 * 86400);
+    minSec = clamp(
+      minSec, 
+      PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, 
+      PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS
+    );
+    maxSec = clamp(
+      maxSec, 
+      PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, 
+      PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS
+    );
     if (maxSec < minSec) maxSec = minSec;
 
     const minCanonical = pgFormatSecondsCanonical(minSec);
@@ -396,6 +463,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
-    if (changes.pg_proxy_status) pgLoadProxyStatus();
+    if (changes.pg_proxy_status) {
+      pgLoadProxyStatus().catch(e => {
+        console.error("[PrivacyGuard] options: failed to reload proxy status", e);
+      });
+    }
   });
 });

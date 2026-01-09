@@ -1,38 +1,61 @@
-browser.runtime.onMessage.addListener(async (msg) => {
+browser.runtime.onMessage.addListener(async (msg, sender) => {
   try {
-    if (!msg || !msg.type) return {};
+    if (!msg || typeof msg !== "object" || !msg.type) {
+      return { error: "Invalid message format" };
+    }
 
-    if (msg.type === PrivacyGuardConstants.MSG.GET_SETTINGS) {
+    const msgType = String(msg.type);
+
+    if (msgType === PrivacyGuardConstants.MSG.GET_SETTINGS || msgType === "GET_SETTINGS") {
       const s = await pgGetSettings();
       return { settings: s };
     }
 
-    if (msg.type === PrivacyGuardConstants.MSG.SET_SETTINGS) {
+    if (msgType === PrivacyGuardConstants.MSG.SET_SETTINGS) {
+      if (!msg.settings || typeof msg.settings !== "object") {
+        return { error: "Invalid settings object" };
+      }
+      
       const cur = await pgGetSettings();
-      const next = Object.assign({}, cur, msg.settings || {});
+      const next = Object.assign({}, cur, msg.settings);
       await pgSetSettings(next);
       return { ok: true, settings: next };
     }
 
-    if (msg.type === PrivacyGuardConstants.MSG.ADBLOCK_GET_STATUS) {
-      if (typeof pgAdblockGetStatus === "function") return { status: pgAdblockGetStatus() };
+    if (msgType === PrivacyGuardConstants.MSG.ADBLOCK_GET_STATUS) {
+      if (typeof pgAdblockGetStatus === "function") {
+        return { status: pgAdblockGetStatus() };
+      }
       return { status: null };
     }
 
-    if (msg.type === PrivacyGuardConstants.MSG.ADBLOCK_UPDATE) {
-      if (typeof pgAdblockUpdateLists === "function") return { status: await pgAdblockUpdateLists() };
+    if (msgType === PrivacyGuardConstants.MSG.ADBLOCK_UPDATE) {
+      if (typeof pgAdblockUpdateLists === "function") {
+        return { status: await pgAdblockUpdateLists() };
+      }
       return { status: null };
     }
 
-    if (msg.type === PrivacyGuardConstants.MSG.HTTPWARN_ALLOW_ONCE) {
+    if (msgType === PrivacyGuardConstants.MSG.HTTPWARN_ALLOW_ONCE) {
       const tabId = Number(msg.tabId);
       const url = String(msg.url || "");
+      
+      if (!Number.isFinite(tabId) || tabId < 0) {
+        return { ok: false, error: "Invalid tabId" };
+      }
+      
+      if (!url) {
+        return { ok: false, error: "Invalid url" };
+      }
+      
       const ok = pgHttpWarnAllowOnce(tabId, url);
       return { ok: ok };
     }
 
-    return {};
+    return { error: "Unknown message type" };
   } catch (e) {
-    return { error: String(e && e.message ? e.message : e) };
+    const errorMsg = String(e && e.message ? e.message : e);
+    console.error("[PrivacyGuard] messaging: error handling message", msg?.type, errorMsg);
+    return { error: errorMsg };
   }
 });

@@ -3,7 +3,10 @@ var pgHttpWarnBypass = new Map();
 function pgHttpWarnAllowOnce(tabId, url) {
   if (!Number.isFinite(tabId) || tabId < 0) return false;
   if (!url || typeof url !== "string") return false;
-  pgHttpWarnBypass.set(tabId, { url: url, exp: Date.now() + 30000 });
+  pgHttpWarnBypass.set(tabId, { 
+    url: url, 
+    exp: Date.now() + PrivacyGuardConstants.HTTP_WARN_BYPASS_TIMEOUT_MS 
+  });
   return true;
 }
 
@@ -29,9 +32,11 @@ browser.webRequest.onBeforeRequest.addListener(
   async (details) => {
     try {
       if (!details || details.type !== "main_frame") return {};
-      if (!pgIsPlainHttp(details.url)) return {};
+      if (!details.url || !pgIsPlainHttp(details.url)) return {};
 
       const tabId = Number(details.tabId);
+      if (!Number.isFinite(tabId) || tabId < 0) return {};
+      
       if (pgHttpWarnShouldBypass(tabId, details.url)) return {};
 
       const s = await pgGetSettings();
@@ -45,6 +50,7 @@ browser.webRequest.onBeforeRequest.addListener(
 
       return { redirectUrl: warnUrl };
     } catch (e) {
+      console.warn("[PrivacyGuard] http_warning: error processing request", details?.url, e);
       return {};
     }
   },

@@ -71,6 +71,7 @@ async function pgLoadDecoySettings() {
   try {
     pgDecoySettings = await pgGetSettings();
   } catch (e) {
+    console.warn("[PrivacyGuard] decoy_traffic: failed to load settings", e);
     pgDecoySettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS);
   }
 }
@@ -110,8 +111,17 @@ function pgScheduleNextDecoy() {
     PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMaxInterval
   );
 
-  minSec = Math.max(1, Math.min(minSec, 7 * 86400));
-  maxSec = Math.max(1, Math.min(maxSec, 7 * 86400));
+  // Clamp to valid ranges
+  minSec = Math.max(
+    PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, 
+    Math.min(minSec, PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS)
+  );
+  maxSec = Math.max(
+    PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, 
+    Math.min(maxSec, PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS)
+  );
+  
+  // Ensure max >= min
   if (maxSec < minSec) maxSec = minSec;
 
   var delaySec = pgRandomInt(minSec, maxSec);
@@ -143,7 +153,7 @@ async function pgDoOneDecoyRequest() {
   pgDecoyRunning = true;
 
   var controller = new AbortController();
-  var timeout = setTimeout(() => controller.abort(), 8000);
+  var timeout = setTimeout(() => controller.abort(), PrivacyGuardConstants.DECOY_REQUEST_TIMEOUT_MS);
 
   try {
     await fetch(url, {
@@ -208,6 +218,7 @@ browser.storage.onChanged.addListener((changes, area) => {
       decoyMaxInterval: pgFormatSecondsCanonical(maxSec)
     }));
   } catch (e) {
+    console.warn("[PrivacyGuard] decoy_traffic: failed to save normalized intervals", e);
   }
 
   pgScheduleNextDecoy();
