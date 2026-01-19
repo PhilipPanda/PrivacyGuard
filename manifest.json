@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "PrivacyGuard",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Your go-to privacy tool for Firefox.",
   "icons": {
     "48": "assets/icons/icon-48.png",
@@ -28,16 +28,24 @@
     "scripts": [
       "src/common/constants.js",
       "src/background/settings.js",
+      "src/background/modules/privacy_stats.js",
       "src/background/modules/adblocker.js",
       "src/background/modules/https_upgrade.js",
       "src/background/modules/url_cleaner.js",
       "src/background/modules/decoy_traffic.js",
       "src/background/modules/proxy_manager.js",
+      "src/background/modules/site_whitelist.js",
       "src/background/modules/anti_fingerprint.js",
       "src/background/modules/referrer_manager.js",
       "src/background/modules/user_agent_manager.js",
       "src/background/modules/cookie_blocker.js",
+      "src/background/modules/storage_manager.js",
+      "src/background/modules/beacon_blocker.js",
+      "src/background/modules/request_timeout.js",
       "src/background/modules/http_warning.js",
+      "src/background/modules/auto_delete_cookies.js",
+      "src/background/modules/privacy_stats.js",
+      "src/background/modules/webrtc_blocker.js",
       "src/background/messaging.js",
       "src/background/index.js"
     ]
@@ -53,7 +61,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/anti_fingerprint.js", "src/content/user_agent_manager.js"],
+      "js": ["src/content/anti_fingerprint.js", "src/content/user_agent_manager.js", "src/content/storage_manager.js", "src/content/beacon_blocker.js"],
       "run_at": "document_start",
       "all_frames": true
     }

@@ -32,9 +32,19 @@
               <div class="label">Ad Blocking</div>
               <div class="badgeExperimental">⚠️ EXPERIMENTAL</div>
             </div>
-            <div class="hint">Blocks requests to known ad/tracker domains. May break some sites.</div>
+            <div class="hint">Blocks requests to known ad domains. May break some sites.</div>
           </div>
           <input id="blockAds" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Block Trackers</div>
+            </div>
+            <div class="hint">Blocks known tracking domains and analytics services.</div>
+          </div>
+          <input id="blockTrackers" class="toggle" type="checkbox" />
         </div>
 
         <div class="row rowStack">
@@ -211,6 +221,114 @@
           <input id="blockThirdPartyCookies" class="toggle" type="checkbox" />
         </div>
 
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Auto-Delete Cookies</div>
+            </div>
+            <div class="hint">Automatically delete cookies older than the specified lifetime.</div>
+          </div>
+          <input id="autoDeleteCookies" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Cookie Lifetime:
+            <input id="cookieLifetime" class="miniInput" type="text" placeholder="7d" />
+          </div>
+          <div class="note">Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code>. Cookies older than this will be automatically deleted.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Block Web Beacons</div>
+            </div>
+            <div class="hint">Blocks tracking pixels, beacons, and analytics requests. Prevents invisible tracking.</div>
+          </div>
+          <input id="blockBeacons" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Block WebRTC Leaks</div>
+            </div>
+            <div class="hint">Blocks WebRTC requests that could leak your real IP address.</div>
+          </div>
+          <input id="blockWebRTC" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Storage Manager</div>
+            </div>
+            <div class="hint">Control localStorage, sessionStorage, and IndexedDB to prevent tracking.</div>
+          </div>
+          <input id="manageStorage" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Mode:
+            <select id="storageMode" class="select">
+              <option value="clear-on-close">Clear on Tab Close</option>
+              <option value="clear-on-navigation">Clear on Navigation</option>
+              <option value="block">Block All Storage</option>
+            </select>
+          </div>
+          <div class="note">
+            <b>Clear on Tab Close:</b> Automatically clears storage when you close a tab<br>
+            <b>Clear on Navigation:</b> Clears storage when navigating between pages<br>
+            <b>Block All Storage:</b> Prevents websites from using localStorage, sessionStorage, and IndexedDB
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Site Whitelist</div>
+            </div>
+            <div class="hint">Disable PrivacyGuard protections on trusted websites.</div>
+          </div>
+          <input id="siteWhitelist" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">Whitelisted sites (one per line, domains only):</div>
+          <textarea id="whitelistedSites" class="textArea" rows="4" spellcheck="false" placeholder="example.com&#10;trusted-site.org"></textarea>
+          <div class="note">Add domains where you want PrivacyGuard protections disabled. Useful for sites that break with privacy features enabled.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Request Timeout</div>
+            </div>
+            <div class="hint">Add timeout to slow requests to prevent tracking delays.</div>
+          </div>
+          <input id="requestTimeout" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">
+            Timeout (milliseconds):
+            <input id="requestTimeoutMs" class="miniInput" type="number" min="1000" max="300000" placeholder="30000" />
+          </div>
+          <div class="note">Requests taking longer than this will be cancelled. Default: 30000ms (30 seconds). Range: 1000-300000ms.</div>
+        </div>
+
         <div class="divider"></div>
 
         <div class="row">
@@ -244,6 +362,26 @@
           <div class="note">Clearing cookies will sign you out of most websites.</div>
           <div class="btnRow">
             <button class="btnDanger" id="clearCookies">Clear All Cookies</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Privacy Statistics</div>
+            </div>
+            <div class="hint">View statistics about blocked requests and privacy protections.</div>
+          </div>
+        </div>
+
+        <div class="row rowStack">
+          <div class="status" id="privacyStats">
+            <div>Loading statistics...</div>
+          </div>
+          <div class="btnRow">
+            <button class="btnSecondary" id="resetStats">Reset Statistics</button>
           </div>
         </div>
       </main>

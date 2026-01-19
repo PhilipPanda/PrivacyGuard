@@ -52,6 +52,20 @@ browser.runtime.onMessage.addListener(async (msg, sender) => {
       return { ok: ok };
     }
 
+    if (msgType === "GET_STATS") {
+      if (typeof pgGetStats === "function") {
+        return { stats: pgGetStats() };
+      }
+      return { stats: null };
+    }
+
+    if (msgType === "RESET_STATS") {
+      if (typeof pgResetStats === "function") {
+        return { stats: await pgResetStats() };
+      }
+      return { stats: null };
+    }
+
     return { error: "Unknown message type" };
   } catch (e) {
     const errorMsg = String(e && e.message ? e.message : e);

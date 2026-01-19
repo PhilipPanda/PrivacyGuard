@@ -139,6 +139,16 @@ browser.webRequest.onBeforeRequest.addListener(
     try {
       if (!pgShouldAntiFp()) return {};
       
+      if (typeof pgIsWhitelistedHostname === "function") {
+        try {
+          const u = new URL(details.url);
+          if (pgIsWhitelistedHostname(u.hostname)) {
+            return {};
+          }
+        } catch (e) {
+        }
+      }
+      
       if (details.type !== "script" && details.type !== "image" && details.type !== "xmlhttprequest") {
         return {};
       }
@@ -152,11 +162,17 @@ browser.webRequest.onBeforeRequest.addListener(
       
       if (pgIsFingerprintingDomain(hostname)) {
         console.log("[PrivacyGuard] anti_fingerprint: blocked fingerprinting domain", details.url);
+        if (typeof pgIncrementStat === "function") {
+          pgIncrementStat("blockedFingerprints");
+        }
         return { cancel: true };
       }
       
       if (pgUrlLooksLikeFpLib(details.url)) {
         console.log("[PrivacyGuard] anti_fingerprint: blocked fingerprinting script", details.url);
+        if (typeof pgIncrementStat === "function") {
+          pgIncrementStat("blockedFingerprints");
+        }
         return { cancel: true };
       }
     } catch (e) {

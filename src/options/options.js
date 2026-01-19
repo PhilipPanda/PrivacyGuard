@@ -168,6 +168,9 @@ async function pgLoadOptions() {
   const blockAdsEl = document.getElementById("blockAds");
   if (blockAdsEl) blockAdsEl.checked = !!s.blockAds;
 
+  const blockTrackersEl = document.getElementById("blockTrackers");
+  if (blockTrackersEl) blockTrackersEl.checked = !!s.blockTrackers;
+
   const alwaysHttpsEl = document.getElementById("alwaysHTTPS");
   if (alwaysHttpsEl) alwaysHttpsEl.checked = !!s.alwaysHTTPS;
 
@@ -229,6 +232,37 @@ async function pgLoadOptions() {
   const blockThirdPartyCookiesEl = document.getElementById("blockThirdPartyCookies");
   if (blockThirdPartyCookiesEl) blockThirdPartyCookiesEl.checked = !!s.blockThirdPartyCookies;
 
+  const autoDeleteCookiesEl = document.getElementById("autoDeleteCookies");
+  if (autoDeleteCookiesEl) autoDeleteCookiesEl.checked = !!s.autoDeleteCookies;
+
+  const cookieLifetimeEl = document.getElementById("cookieLifetime");
+  if (cookieLifetimeEl) cookieLifetimeEl.value = String(s.cookieLifetime || "7d");
+
+  const blockBeaconsEl = document.getElementById("blockBeacons");
+  if (blockBeaconsEl) blockBeaconsEl.checked = !!s.blockBeacons;
+
+  const blockWebRTCEl = document.getElementById("blockWebRTC");
+  if (blockWebRTCEl) blockWebRTCEl.checked = !!s.blockWebRTC;
+
+  const manageStorageEl = document.getElementById("manageStorage");
+  if (manageStorageEl) manageStorageEl.checked = !!s.manageStorage;
+
+  const storageModeEl = document.getElementById("storageMode");
+  if (storageModeEl) storageModeEl.value = String(s.storageMode || "clear-on-close");
+
+  const siteWhitelistEl = document.getElementById("siteWhitelist");
+  if (siteWhitelistEl) siteWhitelistEl.checked = !!s.siteWhitelist;
+
+  const whitelistedSitesEl = document.getElementById("whitelistedSites");
+  const whitelistedSites = Array.isArray(s.whitelistedSites) ? s.whitelistedSites : [];
+  if (whitelistedSitesEl) whitelistedSitesEl.value = whitelistedSites.join("\n");
+
+  const requestTimeoutEl = document.getElementById("requestTimeout");
+  if (requestTimeoutEl) requestTimeoutEl.checked = !!s.requestTimeout;
+
+  const requestTimeoutMsEl = document.getElementById("requestTimeoutMs");
+  if (requestTimeoutMsEl) requestTimeoutMsEl.value = String(s.requestTimeoutMs || 30000);
+
   const statusEl = document.getElementById("adblockStatus");
   if (statusEl) {
     const st = await pgGetAdblockStatus();
@@ -236,6 +270,43 @@ async function pgLoadOptions() {
   }
 
   await pgLoadProxyStatus();
+  await pgLoadPrivacyStats();
+}
+
+async function pgLoadPrivacyStats() {
+  const statsEl = document.getElementById("privacyStats");
+  if (!statsEl) return;
+
+  try {
+    const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
+    if (res && res.stats) {
+      const stats = res.stats;
+      const total = (stats.blockedAds || 0) + 
+                    (stats.blockedBeacons || 0) + 
+                    (stats.blockedCookies || 0) + 
+                    (stats.blockedFingerprints || 0) +
+                    (stats.blockedTrackers || 0);
+      
+      const lastReset = stats.lastReset ? new Date(stats.lastReset).toLocaleString() : "never";
+      
+      statsEl.innerHTML = `
+        <div><strong>Total Blocked:</strong> ${total.toLocaleString()}</div>
+        <div><strong>Ads Blocked:</strong> ${(stats.blockedAds || 0).toLocaleString()}</div>
+        <div><strong>Trackers Blocked:</strong> ${(stats.blockedTrackers || 0).toLocaleString()}</div>
+        <div><strong>Beacons Blocked:</strong> ${(stats.blockedBeacons || 0).toLocaleString()}</div>
+        <div><strong>Cookies Blocked:</strong> ${(stats.blockedCookies || 0).toLocaleString()}</div>
+        <div><strong>Fingerprints Blocked:</strong> ${(stats.blockedFingerprints || 0).toLocaleString()}</div>
+        <div><strong>URLs Cleaned:</strong> ${(stats.cleanedUrls || 0).toLocaleString()}</div>
+        <div><strong>HTTPS Upgrades:</strong> ${(stats.upgradedHttps || 0).toLocaleString()}</div>
+        <div style="margin-top: 8px; font-size: 0.9em; opacity: 0.7;">Last reset: ${lastReset}</div>
+      `;
+    } else {
+      statsEl.textContent = "Statistics unavailable";
+    }
+  } catch (e) {
+    console.error("[PrivacyGuard] options: failed to load stats", e);
+    statsEl.textContent = "Failed to load statistics";
+  }
 }
 
 async function pgClearAllCookies() {
@@ -274,6 +345,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const blockAdsEl = document.getElementById("blockAds");
   if (blockAdsEl) blockAdsEl.addEventListener("change", (e) => pgSaveOptions({ blockAds: e.target.checked }));
+
+  const blockTrackersEl = document.getElementById("blockTrackers");
+  if (blockTrackersEl) blockTrackersEl.addEventListener("change", (e) => pgSaveOptions({ blockTrackers: e.target.checked }));
 
   const alwaysHttpsEl = document.getElementById("alwaysHTTPS");
   if (alwaysHttpsEl) alwaysHttpsEl.addEventListener("change", (e) => pgSaveOptions({ alwaysHTTPS: e.target.checked }));
@@ -322,6 +396,76 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const blockThirdPartyCookiesEl = document.getElementById("blockThirdPartyCookies");
   if (blockThirdPartyCookiesEl) blockThirdPartyCookiesEl.addEventListener("change", (e) => pgSaveOptions({ blockThirdPartyCookies: e.target.checked }));
+
+  const autoDeleteCookiesEl = document.getElementById("autoDeleteCookies");
+  if (autoDeleteCookiesEl) autoDeleteCookiesEl.addEventListener("change", (e) => pgSaveOptions({ autoDeleteCookies: e.target.checked }));
+
+  const cookieLifetimeEl = document.getElementById("cookieLifetime");
+  if (cookieLifetimeEl) {
+    cookieLifetimeEl.addEventListener("blur", (e) => {
+      const lifetime = e.target.value.trim();
+      if (lifetime) {
+        pgSaveOptions({ cookieLifetime: lifetime });
+      }
+    });
+    cookieLifetimeEl.addEventListener("change", (e) => {
+      const lifetime = e.target.value.trim();
+      if (lifetime) {
+        pgSaveOptions({ cookieLifetime: lifetime });
+      }
+    });
+  }
+
+  const blockBeaconsEl = document.getElementById("blockBeacons");
+  if (blockBeaconsEl) blockBeaconsEl.addEventListener("change", (e) => pgSaveOptions({ blockBeacons: e.target.checked }));
+
+  const blockWebRTCEl = document.getElementById("blockWebRTC");
+  if (blockWebRTCEl) blockWebRTCEl.addEventListener("change", (e) => pgSaveOptions({ blockWebRTC: e.target.checked }));
+
+  const manageStorageEl = document.getElementById("manageStorage");
+  if (manageStorageEl) manageStorageEl.addEventListener("change", (e) => pgSaveOptions({ manageStorage: e.target.checked }));
+
+  const storageModeEl = document.getElementById("storageMode");
+  if (storageModeEl) storageModeEl.addEventListener("change", (e) => pgSaveOptions({ storageMode: e.target.value }));
+
+  const siteWhitelistEl = document.getElementById("siteWhitelist");
+  if (siteWhitelistEl) siteWhitelistEl.addEventListener("change", (e) => pgSaveOptions({ siteWhitelist: e.target.checked }));
+
+  const whitelistedSitesEl = document.getElementById("whitelistedSites");
+  let whitelistSaveTimer = null;
+  if (whitelistedSitesEl) {
+    function scheduleWhitelistSave() {
+      clearTimeout(whitelistSaveTimer);
+      whitelistSaveTimer = setTimeout(async () => {
+        const text = whitelistedSitesEl.value || "";
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && l.length > 0);
+        const normalized = lines.map(l => {
+          let d = l.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].split("?")[0].split("#")[0].split(":")[0];
+          return d;
+        }).filter(d => d && d.includes("."));
+        await pgSaveOptions({ whitelistedSites: normalized });
+      }, 600);
+    }
+    whitelistedSitesEl.addEventListener("input", scheduleWhitelistSave);
+    whitelistedSitesEl.addEventListener("blur", scheduleWhitelistSave);
+  }
+
+  const requestTimeoutEl = document.getElementById("requestTimeout");
+  if (requestTimeoutEl) requestTimeoutEl.addEventListener("change", (e) => pgSaveOptions({ requestTimeout: e.target.checked }));
+
+  const requestTimeoutMsEl = document.getElementById("requestTimeoutMs");
+  if (requestTimeoutMsEl) {
+    requestTimeoutMsEl.addEventListener("change", (e) => {
+      const ms = clamp(Number(e.target.value) || 30000, 1000, 300000);
+      e.target.value = String(ms);
+      pgSaveOptions({ requestTimeoutMs: ms });
+    });
+    requestTimeoutMsEl.addEventListener("blur", (e) => {
+      const ms = clamp(Number(e.target.value) || 30000, 1000, 300000);
+      e.target.value = String(ms);
+      pgSaveOptions({ requestTimeoutMs: ms });
+    });
+  }
 
   const minEl = document.getElementById("decoyMinInterval");
   const maxEl = document.getElementById("decoyMaxInterval");
@@ -461,11 +605,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  const resetStatsBtn = document.getElementById("resetStats");
+  if (resetStatsBtn) {
+    resetStatsBtn.addEventListener("click", async () => {
+      const ok = confirm("Reset all privacy statistics?\n\nThis will clear all counters.");
+      if (!ok) return;
+
+      resetStatsBtn.disabled = true;
+      try {
+        await browser.runtime.sendMessage({ type: "RESET_STATS" });
+        await pgLoadPrivacyStats();
+      } catch (e) {
+        console.error("[PrivacyGuard] options: failed to reset stats", e);
+        alert("Failed to reset statistics.");
+      } finally {
+        resetStatsBtn.disabled = false;
+      }
+    });
+  }
+
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     if (changes.pg_proxy_status) {
       pgLoadProxyStatus().catch(e => {
         console.error("[PrivacyGuard] options: failed to reload proxy status", e);
+      });
+    }
+    if (changes.pg_privacy_stats) {
+      pgLoadPrivacyStats().catch(e => {
+        console.error("[PrivacyGuard] options: failed to reload privacy stats", e);
       });
     }
   });

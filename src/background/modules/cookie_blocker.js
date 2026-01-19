@@ -63,6 +63,9 @@ browser.cookies.onChanged.addListener(async (changeInfo) => {
               storeId: cookie.storeId
             });
             console.log("[PrivacyGuard] cookie_blocker: blocked third-party cookie", cookie.name, "from", cookie.domain);
+            if (typeof pgIncrementStat === "function") {
+              pgIncrementStat("blockedCookies");
+            }
             return;
           } catch (e) {
           }

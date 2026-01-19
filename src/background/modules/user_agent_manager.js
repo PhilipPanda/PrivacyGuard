@@ -68,6 +68,16 @@ browser.webRequest.onBeforeSendHeaders.addListener(
     try {
       if (!pgShouldManageUserAgent()) return {};
 
+      if (typeof pgIsWhitelistedHostname === "function") {
+        try {
+          const u = new URL(details.url);
+          if (pgIsWhitelistedHostname(u.hostname)) {
+            return {};
+          }
+        } catch (e) {
+        }
+      }
+
       const userAgent = pgGetUserAgent();
       if (!userAgent) return {};
 

@@ -1,7 +1,7 @@
 var PrivacyGuardConstants = {
   STORAGE_KEY: "settings",
   
-  VERSION: "0.1.2",
+  VERSION: "0.1.4",
   EXTENSION_NAME: "PrivacyGuard",
 
   DEFAULT_SETTINGS: {
@@ -46,8 +46,21 @@ var PrivacyGuardConstants = {
     blockTrackers: false,
     blockThirdPartyCookies: false,
     
+    manageStorage: false,
+    storageMode: "clear-on-close",
+    
+    blockBeacons: false,
+    
+    siteWhitelist: false,
+    whitelistedSites: [],
+    
+    requestTimeout: false,
+    requestTimeoutMs: 30000,
+    
     autoDeleteCookies: false,
-    cookieLifetime: "7d"
+    cookieLifetime: "7d",
+    
+    blockWebRTC: false
   },
 
   ADBLOCK_SOURCES: [

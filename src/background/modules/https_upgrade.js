@@ -53,6 +53,16 @@ browser.webRequest.onBeforeRequest.addListener(
 
       if (!details.url) return {};
 
+      if (typeof pgIsWhitelistedHostname === "function") {
+        try {
+          const u = new URL(details.url);
+          if (pgIsWhitelistedHostname(u.hostname)) {
+            return {};
+          }
+        } catch (e) {
+        }
+      }
+
       const s = pgHttpsSettings;
       if (!s || !s.enabled || !s.alwaysHTTPS) return {};
 
@@ -60,6 +70,9 @@ browser.webRequest.onBeforeRequest.addListener(
       if (!upgraded || upgraded === details.url) return {};
 
       console.log("[PrivacyGuard] https_upgrade: upgraded", details.url, "->", upgraded);
+      if (typeof pgIncrementStat === "function") {
+        pgIncrementStat("upgradedHttps");
+      }
       return { redirectUrl: upgraded };
     } catch (e) {
       console.warn("[PrivacyGuard] https_upgrade: error processing request", details?.url, e);

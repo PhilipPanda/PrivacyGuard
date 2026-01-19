@@ -319,11 +319,51 @@ function pgIsAlwaysAllowed(hostname) {
   return false;
 }
 
+var PG_TRACKER_DOMAINS = [
+  "doubleclick.net", "googleadservices.com", "googlesyndication.com",
+  "google-analytics.com", "googletagmanager.com", "google-analytics.com",
+  "scorecardresearch.com", "quantserve.com", "outbrain.com",
+  "taboola.com", "criteo.com", "rubiconproject.com",
+  "pubmatic.com", "openx.net", "adsrvr.org", "adtech.com",
+  "facebook.com", "facebook.net", "fbcdn.net", "analytics.facebook.com",
+  "connect.facebook.net", "pixel.facebook.com",
+  "advertising.com", "adnxs.com", "adform.net", "adtechus.com",
+  "amazon-adsystem.com", "adsystem.amazon.com",
+  "adservice.google.com", "ad.doubleclick.net",
+  "adsafeprotected.com", "advertising.com"
+];
+
+function pgIsTrackerDomain(hostname) {
+  if (!hostname) return false;
+  hostname = hostname.toLowerCase();
+  
+  for (const domain of PG_TRACKER_DOMAINS) {
+    if (hostname === domain || hostname.endsWith("." + domain)) {
+      return true;
+    }
+  }
+  
+  const trackerPatterns = [
+    "track", "tracking", "tracker", "analytics", "metrics",
+    "measure", "monitor", "pixel", "beacon", "collect",
+    "log", "logger", "stats", "statistics"
+  ];
+  
+  for (const pattern of trackerPatterns) {
+    if (hostname.includes(pattern)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 browser.webRequest.onBeforeRequest.addListener(
   (details) => {
     try {
       const s = pgAdblockSettings;
-      if (!s || !s.enabled || !s.blockAds) return {};
+      if (!s || !s.enabled) return {};
+      if (!s.blockAds && !s.blockTrackers) return {};
 
       // Only block if adblock is ready
       if (!pgAdblockStatus.ready) return {};
@@ -344,20 +384,34 @@ browser.webRequest.onBeforeRequest.addListener(
       // Skip localhost and local IPs
       if (pgIsLocalish(hostname)) return {};
 
-      // Check hardcoded allow list first (for sites like canyoublockit.com)
+      if (typeof pgIsWhitelistedHostname === "function" && pgIsWhitelistedHostname(hostname)) {
+        return {};
+      }
+
       if (pgIsAlwaysAllowed(hostname)) {
         return {};
       }
 
-      // Check allow list (from filter lists)
       if (pgHostMatchesSet(hostname, pgAdblockAllow)) {
         return {};
       }
 
       // Then check block list
       if (pgIsBlockedHost(hostname)) {
-        console.log("[PrivacyGuard] adblocker: blocked", details.type, details.url);
-        return { cancel: true };
+        const isTracker = pgIsTrackerDomain(hostname);
+        const shouldBlock = (s.blockAds && !isTracker) || (s.blockTrackers && isTracker) || (s.blockAds && s.blockTrackers);
+        
+        if (shouldBlock) {
+          console.log("[PrivacyGuard] adblocker: blocked", isTracker ? "tracker" : "ad", details.type, details.url);
+          if (typeof pgIncrementStat === "function") {
+            if (isTracker) {
+              pgIncrementStat("blockedTrackers");
+            } else {
+              pgIncrementStat("blockedAds");
+            }
+          }
+          return { cancel: true };
+        }
       }
     } catch (e) {
       // Silently fail to avoid breaking page loads
