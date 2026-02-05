@@ -1,7 +1,7 @@
 var PrivacyGuardConstants = {
   STORAGE_KEY: "settings",
   
-  VERSION: "0.1.4",
+  VERSION: "0.1.5",
   EXTENSION_NAME: "PrivacyGuard",
 
   DEFAULT_SETTINGS: {
@@ -10,6 +10,9 @@ var PrivacyGuardConstants = {
     alwaysHTTPS: true,
     stripUTMParams: true,
     blockAds: true,
+    adblockCustomBlocklist: [],
+    adblockCustomAllowlist: [],
+    adblockDisabledSites: [],
 
     decoyTraffic: false,
     decoyMinInterval: "30m",

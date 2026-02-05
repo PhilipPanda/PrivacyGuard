@@ -55,6 +55,20 @@
           </div>
         </div>
 
+        <div class="row rowStack">
+          <div class="status">Custom blocklist (one domain per line):</div>
+          <textarea id="adblockCustomBlocklist" class="textArea" rows="4" spellcheck="false" placeholder="ads.example.com&#10;tracker.example"></textarea>
+          <div class="status">Custom allowlist (one domain per line):</div>
+          <textarea id="adblockCustomAllowlist" class="textArea" rows="3" spellcheck="false" placeholder="cdn.example.com"></textarea>
+          <div class="note">Allowlist wins over blocklist for matching domains or subdomains.</div>
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">Disable adblock on sites (one domain per line):</div>
+          <textarea id="adblockDisabledSites" class="textArea" rows="3" spellcheck="false" placeholder="example.com"></textarea>
+          <div class="note">Disables ad and tracker blocking only for these sites. Other privacy features still apply.</div>
+        </div>
+
         <div class="divider"></div>
 
         <div class="row">

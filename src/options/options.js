@@ -29,9 +29,13 @@ async function pgUpdateAdblockLists() {
 function pgFormatStatus(status) {
   if (!status) return "Adblock status unavailable.";
   const count = status.blockedDomains || 0;
+  const allowCount = status.allowDomains || 0;
   const updated = status.lastUpdated ? new Date(status.lastUpdated).toLocaleString() : "never";
-  const err = status.lastError ? ` • Error: ${status.lastError}` : "";
-  return `Blocked domains loaded: ${count.toLocaleString()} • Last updated: ${updated}${err}`;
+  const failures = status.sourcesFailed || 0;
+  const duration = status.lastDurationMs ? ` - ${Math.round(status.lastDurationMs).toLocaleString()}ms` : "";
+  const err = status.lastError ? ` - Error: ${status.lastError}` : "";
+  const failNote = failures ? ` - ${failures} source(s) failed` : "";
+  return `Blocked domains loaded: ${count.toLocaleString()} - Allowlist: ${allowCount.toLocaleString()} - Last updated: ${updated}${duration}${failNote}${err}`;
 }
 
 function pgNormalizeHostLine(line) {
@@ -60,6 +64,24 @@ function pgParseDecoySites(text) {
 
   for (const line of lines) {
     const host = pgNormalizeHostLine(line);
+    if (!host) continue;
+    if (seen.has(host)) continue;
+    seen.add(host);
+    out.push(host);
+  }
+
+  return out;
+}
+
+function pgParseDomainList(text) {
+  const lines = String(text || "").split(/\r?\n/);
+  const out = [];
+  const seen = new Set();
+
+  for (const line of lines) {
+    const cleaned = String(line || "").split("#")[0].trim();
+    if (!cleaned) continue;
+    const host = pgNormalizeHostLine(cleaned);
     if (!host) continue;
     if (seen.has(host)) continue;
     seen.add(host);
@@ -170,6 +192,16 @@ async function pgLoadOptions() {
 
   const blockTrackersEl = document.getElementById("blockTrackers");
   if (blockTrackersEl) blockTrackersEl.checked = !!s.blockTrackers;
+
+  const adblockCustomBlocklistEl = document.getElementById("adblockCustomBlocklist");
+  const adblockCustomAllowlistEl = document.getElementById("adblockCustomAllowlist");
+  const adblockDisabledSitesEl = document.getElementById("adblockDisabledSites");
+  const customBlocklist = Array.isArray(s.adblockCustomBlocklist) ? s.adblockCustomBlocklist : [];
+  const customAllowlist = Array.isArray(s.adblockCustomAllowlist) ? s.adblockCustomAllowlist : [];
+  const disabledSites = Array.isArray(s.adblockDisabledSites) ? s.adblockDisabledSites : [];
+  if (adblockCustomBlocklistEl) adblockCustomBlocklistEl.value = customBlocklist.join("\n");
+  if (adblockCustomAllowlistEl) adblockCustomAllowlistEl.value = customAllowlist.join("\n");
+  if (adblockDisabledSitesEl) adblockDisabledSitesEl.value = disabledSites.join("\n");
 
   const alwaysHttpsEl = document.getElementById("alwaysHTTPS");
   if (alwaysHttpsEl) alwaysHttpsEl.checked = !!s.alwaysHTTPS;
@@ -348,6 +380,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const blockTrackersEl = document.getElementById("blockTrackers");
   if (blockTrackersEl) blockTrackersEl.addEventListener("change", (e) => pgSaveOptions({ blockTrackers: e.target.checked }));
+
+  const adblockCustomBlocklistEl = document.getElementById("adblockCustomBlocklist");
+  const adblockCustomAllowlistEl = document.getElementById("adblockCustomAllowlist");
+  const adblockDisabledSitesEl = document.getElementById("adblockDisabledSites");
+  let adblockSaveTimer = null;
+
+  function scheduleAdblockSave() {
+    clearTimeout(adblockSaveTimer);
+    adblockSaveTimer = setTimeout(async () => {
+      const blocklist = adblockCustomBlocklistEl ? pgParseDomainList(adblockCustomBlocklistEl.value) : [];
+      const allowlist = adblockCustomAllowlistEl ? pgParseDomainList(adblockCustomAllowlistEl.value) : [];
+      const disabled = adblockDisabledSitesEl ? pgParseDomainList(adblockDisabledSitesEl.value) : [];
+      await pgSaveOptions({
+        adblockCustomBlocklist: blocklist,
+        adblockCustomAllowlist: allowlist,
+        adblockDisabledSites: disabled
+      });
+    }, 600);
+  }
+
+  if (adblockCustomBlocklistEl) {
+    adblockCustomBlocklistEl.addEventListener("input", scheduleAdblockSave);
+    adblockCustomBlocklistEl.addEventListener("blur", scheduleAdblockSave);
+  }
+  if (adblockCustomAllowlistEl) {
+    adblockCustomAllowlistEl.addEventListener("input", scheduleAdblockSave);
+    adblockCustomAllowlistEl.addEventListener("blur", scheduleAdblockSave);
+  }
+  if (adblockDisabledSitesEl) {
+    adblockDisabledSitesEl.addEventListener("input", scheduleAdblockSave);
+    adblockDisabledSitesEl.addEventListener("blur", scheduleAdblockSave);
+  }
 
   const alwaysHttpsEl = document.getElementById("alwaysHTTPS");
   if (alwaysHttpsEl) alwaysHttpsEl.addEventListener("change", (e) => pgSaveOptions({ alwaysHTTPS: e.target.checked }));
@@ -638,3 +702,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
+
