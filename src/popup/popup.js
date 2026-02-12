@@ -79,6 +79,16 @@ function pgSetUIEnabled(isEnabled) {
 async function pgLoadPopup() {
   const s = await pgGetSettings();
   pgSetUIEnabled(!!s.enabled);
+  try {
+    const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
+    const statsEl = document.getElementById("popupStats");
+    if (statsEl && res && res.stats) {
+      const t = (res.stats.blockedAds || 0) + (res.stats.blockedBeacons || 0) + (res.stats.blockedCookies || 0) +
+                (res.stats.blockedFingerprints || 0) + (res.stats.blockedTrackers || 0) + (res.stats.blockedCryptominers || 0);
+      statsEl.textContent = t > 0 ? "Blocked: " + t.toLocaleString() : "";
+      statsEl.style.display = t > 0 ? "block" : "none";
+    }
+  } catch (e) {}
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

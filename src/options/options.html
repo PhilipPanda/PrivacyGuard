@@ -277,6 +277,36 @@
           <input id="blockWebRTC" class="toggle" type="checkbox" />
         </div>
 
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Block Social Widgets</div>
+            </div>
+            <div class="hint">Blocks third-party social embed scripts (Facebook, Twitter, etc.).</div>
+          </div>
+          <input id="blockSocialWidgets" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Block Crypto Miners</div>
+            </div>
+            <div class="hint">Blocks in-browser cryptocurrency mining scripts. Enabled by default.</div>
+          </div>
+          <input id="blockCryptoMiners" class="toggle" type="checkbox" />
+        </div>
+
+        <div class="row">
+          <div class="left">
+            <div class="labelRow">
+              <div class="label">Disable Hyperlink Auditing</div>
+            </div>
+            <div class="hint">Removes link ping attributes that report when you click links.</div>
+          </div>
+          <input id="disableHyperlinkAuditing" class="toggle" type="checkbox" />
+        </div>
+
         <div class="divider"></div>
 
         <div class="row">
@@ -376,6 +406,15 @@
           <div class="note">Clearing cookies will sign you out of most websites.</div>
           <div class="btnRow">
             <button class="btnDanger" id="clearCookies">Clear All Cookies</button>
+          </div>
+        </div>
+
+        <div class="row rowStack">
+          <div class="status">Export or import your PrivacyGuard settings as JSON.</div>
+          <div class="btnRow">
+            <button class="btnSecondary" id="exportSettings">Export Settings</button>
+            <button class="btnSecondary" id="importSettings">Import Settings</button>
+            <input type="file" id="importSettingsFile" accept=".json,application/json" style="display:none" />
           </div>
         </div>
 

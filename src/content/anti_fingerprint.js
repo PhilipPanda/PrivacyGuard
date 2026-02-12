@@ -183,7 +183,55 @@
       return offer;
     });
   };
-  
+
+  if (window.AudioContext || window.webkitAudioContext) {
+    const Orig = window.AudioContext || window.webkitAudioContext;
+    const Wrapped = function() {
+      let ctx;
+      if (arguments.length > 0) {
+        const Ctor = Orig.bind.apply(Orig, [null].concat([].slice.call(arguments)));
+        ctx = new Ctor();
+      } else {
+        ctx = new Orig();
+      }
+      const origCreateAnalyser = ctx.createAnalyser && ctx.createAnalyser.bind(ctx);
+      if (origCreateAnalyser) {
+        ctx.createAnalyser = function() {
+          const node = origCreateAnalyser();
+          if (node.getFloatFrequencyData) {
+            const orig = node.getFloatFrequencyData.bind(node);
+            node.getFloatFrequencyData = function(arr) {
+              orig(arr);
+              for (var i = 0; i < arr.length; i++) {
+                if (Math.random() < 0.02) arr[i] = arr[i] + (Math.random() - 0.5) * 2;
+              }
+            };
+          }
+          return node;
+        };
+      }
+      return ctx;
+    };
+    Wrapped.prototype = Orig.prototype;
+    if (window.AudioContext) window.AudioContext = Wrapped;
+    if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+  }
+
+  try {
+    if (document.fonts && document.fonts.forEach) {
+      var origForEach = document.fonts.forEach.bind(document.fonts);
+      document.fonts.forEach = function(cb) {
+        var count = 0;
+        origForEach(function(f) {
+          if (count < 12) {
+            count++;
+            cb(f);
+          }
+        });
+      };
+    }
+  } catch (e) {}
+
     console.log("[PrivacyGuard] anti-fingerprinting content script initialized");
   }
 })();

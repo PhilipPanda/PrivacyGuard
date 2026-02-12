@@ -276,6 +276,15 @@ async function pgLoadOptions() {
   const blockWebRTCEl = document.getElementById("blockWebRTC");
   if (blockWebRTCEl) blockWebRTCEl.checked = !!s.blockWebRTC;
 
+  const blockSocialWidgetsEl = document.getElementById("blockSocialWidgets");
+  if (blockSocialWidgetsEl) blockSocialWidgetsEl.checked = !!s.blockSocialWidgets;
+
+  const blockCryptoMinersEl = document.getElementById("blockCryptoMiners");
+  if (blockCryptoMinersEl) blockCryptoMinersEl.checked = !!s.blockCryptoMiners;
+
+  const disableHyperlinkAuditingEl = document.getElementById("disableHyperlinkAuditing");
+  if (disableHyperlinkAuditingEl) disableHyperlinkAuditingEl.checked = s.disableHyperlinkAuditing !== false;
+
   const manageStorageEl = document.getElementById("manageStorage");
   if (manageStorageEl) manageStorageEl.checked = !!s.manageStorage;
 
@@ -313,14 +322,15 @@ async function pgLoadPrivacyStats() {
     const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
     if (res && res.stats) {
       const stats = res.stats;
-      const total = (stats.blockedAds || 0) + 
-                    (stats.blockedBeacons || 0) + 
-                    (stats.blockedCookies || 0) + 
+      const total = (stats.blockedAds || 0) +
+                    (stats.blockedBeacons || 0) +
+                    (stats.blockedCookies || 0) +
                     (stats.blockedFingerprints || 0) +
-                    (stats.blockedTrackers || 0);
-      
+                    (stats.blockedTrackers || 0) +
+                    (stats.blockedCryptominers || 0);
+
       const lastReset = stats.lastReset ? new Date(stats.lastReset).toLocaleString() : "never";
-      
+
       statsEl.innerHTML = `
         <div><strong>Total Blocked:</strong> ${total.toLocaleString()}</div>
         <div><strong>Ads Blocked:</strong> ${(stats.blockedAds || 0).toLocaleString()}</div>
@@ -328,6 +338,7 @@ async function pgLoadPrivacyStats() {
         <div><strong>Beacons Blocked:</strong> ${(stats.blockedBeacons || 0).toLocaleString()}</div>
         <div><strong>Cookies Blocked:</strong> ${(stats.blockedCookies || 0).toLocaleString()}</div>
         <div><strong>Fingerprints Blocked:</strong> ${(stats.blockedFingerprints || 0).toLocaleString()}</div>
+        <div><strong>Crypto Miners Blocked:</strong> ${(stats.blockedCryptominers || 0).toLocaleString()}</div>
         <div><strong>URLs Cleaned:</strong> ${(stats.cleanedUrls || 0).toLocaleString()}</div>
         <div><strong>HTTPS Upgrades:</strong> ${(stats.upgradedHttps || 0).toLocaleString()}</div>
         <div style="margin-top: 8px; font-size: 0.9em; opacity: 0.7;">Last reset: ${lastReset}</div>
@@ -485,6 +496,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const blockWebRTCEl = document.getElementById("blockWebRTC");
   if (blockWebRTCEl) blockWebRTCEl.addEventListener("change", (e) => pgSaveOptions({ blockWebRTC: e.target.checked }));
+
+  const blockSocialWidgetsEl = document.getElementById("blockSocialWidgets");
+  if (blockSocialWidgetsEl) blockSocialWidgetsEl.addEventListener("change", (e) => pgSaveOptions({ blockSocialWidgets: e.target.checked }));
+
+  const blockCryptoMinersEl = document.getElementById("blockCryptoMiners");
+  if (blockCryptoMinersEl) blockCryptoMinersEl.addEventListener("change", (e) => pgSaveOptions({ blockCryptoMiners: e.target.checked }));
+
+  const disableHyperlinkAuditingEl = document.getElementById("disableHyperlinkAuditing");
+  if (disableHyperlinkAuditingEl) disableHyperlinkAuditingEl.addEventListener("change", (e) => pgSaveOptions({ disableHyperlinkAuditing: e.target.checked }));
 
   const manageStorageEl = document.getElementById("manageStorage");
   if (manageStorageEl) manageStorageEl.addEventListener("change", (e) => pgSaveOptions({ manageStorage: e.target.checked }));
@@ -666,6 +686,54 @@ document.addEventListener("DOMContentLoaded", async () => {
       } finally {
         clearCookiesBtn.disabled = false;
       }
+    });
+  }
+
+  const exportSettingsBtn = document.getElementById("exportSettings");
+  if (exportSettingsBtn) {
+    exportSettingsBtn.addEventListener("click", async () => {
+      try {
+        const s = await pgGetSettings();
+        const blob = new Blob([JSON.stringify({ version: PrivacyGuardConstants.VERSION, settings: s }, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "privacyguard-settings-" + new Date().toISOString().slice(0, 10) + ".json";
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error("[PrivacyGuard] export settings failed", e);
+        alert("Failed to export settings.");
+      }
+    });
+  }
+
+  const importSettingsBtn = document.getElementById("importSettings");
+  const importSettingsFileEl = document.getElementById("importSettingsFile");
+  if (importSettingsBtn && importSettingsFileEl) {
+    importSettingsBtn.addEventListener("click", () => importSettingsFileEl.click());
+    importSettingsFileEl.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.onerror = rej;
+          r.readAsText(file);
+        });
+        const data = JSON.parse(text);
+        const imported = data.settings && typeof data.settings === "object" ? data.settings : {};
+        const defaults = PrivacyGuardConstants.DEFAULT_SETTINGS;
+        const merged = Object.assign({}, defaults, imported);
+        await pgSaveOptions(merged);
+        await pgLoadOptions();
+        alert("Settings imported successfully.");
+      } catch (err) {
+        console.error("[PrivacyGuard] import settings failed", err);
+        alert("Failed to import settings. Check that the file is valid JSON.");
+      }
+      importSettingsFileEl.value = "";
     });
   }
 

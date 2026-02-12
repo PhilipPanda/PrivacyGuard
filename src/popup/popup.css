@@ -142,3 +142,10 @@ body::before{
 
 .btn:hover{ filter: brightness(1.05); }
 .btn:active{ transform: translateY(1px); }
+
+.popupStats{
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  text-align: center;
+}

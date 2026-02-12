@@ -85,6 +85,8 @@ var PG_TRACKING_PARAMS = [
   "ds_product_custom_label_4"
 ];
 
+var PG_TRACKING_PARAMS_SET = new Set(PG_TRACKING_PARAMS);
+
 function pgCleanUrl(urlString) {
   try {
     const url = new URL(urlString);
@@ -93,7 +95,7 @@ function pgCleanUrl(urlString) {
 
     let changed = false;
 
-    for (const p of PG_TRACKING_PARAMS) {
+    for (const p of PG_TRACKING_PARAMS_SET) {
       if (url.searchParams.has(p)) {
         url.searchParams.delete(p);
         changed = true;
