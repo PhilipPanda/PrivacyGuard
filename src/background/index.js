@@ -1,19 +1,28 @@
-browser.runtime.onInstalled.addListener(async (details) => {
+browser.runtime.onInstalled.addListener(async function(details) {
   try {
-    console.log("[PrivacyGuard] installed/updated:", details.reason);
-    
-    const settings = await pgGetSettings();
-    await pgSetSettings(settings);
-    
-    // Initialize adblock on install
+    await pgInitSettings();
+    pgLog("info", "bootstrap", "Extension installed/updated", { reason: details.reason });
+
     if (details.reason === "install" && typeof pgAdblockUpdateLists === "function") {
-      setTimeout(() => {
-        pgAdblockUpdateLists().catch(e => {
-          console.warn("[PrivacyGuard] failed to initialize adblock on install", e);
+      setTimeout(function() {
+        pgAdblockUpdateLists().catch(function(error) {
+          pgLog("warn", "bootstrap", "Failed to initialize adblock on install", { error: String(error) });
         });
       }, 1000);
     }
-  } catch (e) {
-    console.error("[PrivacyGuard] onInstalled handler failed", e);
+  } catch (error) {
+    pgLog("error", "bootstrap", "onInstalled handler failed", { error: String(error) });
   }
 });
+
+(async function bootstrapPrivacyGuard() {
+  try {
+    await pgInitSettings();
+    pgLog("info", "bootstrap", "Background initialized", {
+      version: PrivacyGuardConstants.VERSION,
+      features: pgListFeatures().length
+    });
+  } catch (error) {
+    pgLog("error", "bootstrap", "Background bootstrap failed", { error: String(error) });
+  }
+})();

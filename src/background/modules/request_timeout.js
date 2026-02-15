@@ -1,77 +1,70 @@
-console.log("[PrivacyGuard] module loaded: request_timeout");
+pgLog("info", "request_timeout", "Module loaded");
 
 var pgTimeoutSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS);
+var pgTimeoutMap = new Map();
 
-(async () => {
+function pgIsRequestTimeoutEnabled() {
+  return pgIsFeatureEnabled("request_timeout", pgTimeoutSettings);
+}
+
+function pgGetRequestTimeoutMs() {
+  return pgClamp(pgTimeoutSettings.requestTimeoutMs, 1000, 300000);
+}
+
+/**
+ * Handle onBeforeRequest to track potential timeout candidate requests.
+ * @param {object} details WebRequest details.
+ * @returns {object} WebRequest blocking response.
+ */
+function pgHandleRequestTimeoutBeforeRequest(details) {
   try {
-    pgTimeoutSettings = await pgGetSettings();
-  } catch (e) {
-    console.warn("[PrivacyGuard] request_timeout: failed to load settings", e);
-  }
-})();
+    if (!pgIsRequestTimeoutEnabled()) return {};
+    if (!details || details.type === "main_frame") return {};
+    if (!details.requestId) return {};
 
-browser.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
-  const key = PrivacyGuardConstants.STORAGE_KEY;
-  if (changes[key] && changes[key].newValue) {
-    pgTimeoutSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS, changes[key].newValue);
+    var timeoutMs = pgGetRequestTimeoutMs();
+    var requestId = String(details.requestId);
+
+    var timerId = setTimeout(function() {
+      pgTimeoutMap.delete(requestId);
+      pgLog("warn", "request_timeout", "Request timed out", {
+        url: details.url,
+        timeoutMs: timeoutMs
+      });
+    }, timeoutMs);
+
+    pgTimeoutMap.set(requestId, timerId);
+    return {};
+  } catch (error) {
+    pgLog("warn", "request_timeout", "Failed to process request timeout", { error: String(error) });
+    return {};
   }
+}
+
+function pgClearTrackedRequest(requestId) {
+  var key = String(requestId || "");
+  var timerId = pgTimeoutMap.get(key);
+  if (!timerId) return;
+  clearTimeout(timerId);
+  pgTimeoutMap.delete(key);
+}
+
+pgSubscribeSettings(function(nextSettings) {
+  pgTimeoutSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS, nextSettings);
 });
 
-function pgShouldTimeoutRequests() {
-  return !!(pgTimeoutSettings && pgTimeoutSettings.enabled && pgTimeoutSettings.requestTimeout);
-}
-
-function pgGetTimeoutMs() {
-  const timeout = pgTimeoutSettings.requestTimeoutMs || 30000;
-  return Math.max(1000, Math.min(300000, Number(timeout)));
-}
-
-var pgActiveRequests = new Map();
-
 browser.webRequest.onBeforeRequest.addListener(
-  (details) => {
-    if (!pgShouldTimeoutRequests()) return {};
-    if (details.type === "main_frame") return {};
-    
-    const timeout = pgGetTimeoutMs();
-    const requestId = details.requestId;
-    
-    const timeoutId = setTimeout(() => {
-      try {
-        browser.webRequest.handlerBehaviorChanged();
-        console.log("[PrivacyGuard] request_timeout: request timed out", details.url);
-      } catch (e) {
-      }
-      pgActiveRequests.delete(requestId);
-    }, timeout);
-    
-    pgActiveRequests.set(requestId, timeoutId);
-    
-    return {};
-  },
+  pgHandleRequestTimeoutBeforeRequest,
   { urls: ["<all_urls>"] },
   ["blocking"]
 );
 
-browser.webRequest.onCompleted.addListener(
-  (details) => {
-    const timeoutId = pgActiveRequests.get(details.requestId);
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      pgActiveRequests.delete(details.requestId);
-    }
-  },
-  { urls: ["<all_urls>"] }
-);
+browser.webRequest.onCompleted.addListener(function(details) {
+  if (!details) return;
+  pgClearTrackedRequest(details.requestId);
+}, { urls: ["<all_urls>"] });
 
-browser.webRequest.onErrorOccurred.addListener(
-  (details) => {
-    const timeoutId = pgActiveRequests.get(details.requestId);
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      pgActiveRequests.delete(details.requestId);
-    }
-  },
-  { urls: ["<all_urls>"] }
-);
+browser.webRequest.onErrorOccurred.addListener(function(details) {
+  if (!details) return;
+  pgClearTrackedRequest(details.requestId);
+}, { urls: ["<all_urls>"] });

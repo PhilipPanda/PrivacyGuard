@@ -1,77 +1,56 @@
-console.log("[PrivacyGuard] module loaded: storage_manager");
+pgLog("info", "storage_manager", "Module loaded");
 
 var pgStorageSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS);
-
-(async () => {
-  try {
-    pgStorageSettings = await pgGetSettings();
-  } catch (e) {
-    console.warn("[PrivacyGuard] storage_manager: failed to load settings", e);
-  }
-})();
-
-browser.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
-  const key = PrivacyGuardConstants.STORAGE_KEY;
-  if (changes[key] && changes[key].newValue) {
-    pgStorageSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS, changes[key].newValue);
-  }
-});
+var pgTabOrigins = new Map();
 
 function pgShouldManageStorage() {
-  return !!(pgStorageSettings && pgStorageSettings.enabled && pgStorageSettings.manageStorage);
+  return pgIsFeatureEnabled("storage_manager", pgStorageSettings);
 }
 
-var pgTabUrls = new Map();
+function pgTrackTabOrigin(tabId, tab) {
+  if (!tab || !tab.url) return;
 
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tab && tab.url) {
-    try {
-      const url = new URL(tab.url);
-      if (url.protocol === "http:" || url.protocol === "https:") {
-        pgTabUrls.set(tabId, url.origin);
-      }
-    } catch (e) {
-    }
-  }
-});
+  var parsed = pgSafeParseUrl(tab.url);
+  if (!parsed) return;
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
 
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tab && tab.url) {
-    try {
-      const url = new URL(tab.url);
-      if (url.protocol === "http:" || url.protocol === "https:") {
-        pgTabUrls.set(tabId, url.origin);
-      }
-    } catch (e) {
-    }
-  }
-});
+  pgTabOrigins.set(tabId, parsed.origin);
+}
 
-browser.tabs.onRemoved.addListener(async (tabId) => {
+async function pgHandleTabClosed(tabId) {
   if (!pgShouldManageStorage()) return;
-  
+
+  var mode = pgStorageSettings.storageMode || "clear-on-close";
+  if (mode !== "clear-on-close") return;
+
+  var origin = pgTabOrigins.get(tabId);
+  pgTabOrigins.delete(tabId);
+  if (!origin) return;
+
   try {
-    const mode = pgStorageSettings.storageMode || "clear-on-close";
-    
-    if (mode === "clear-on-close") {
-      const origin = pgTabUrls.get(tabId);
-      if (origin) {
-        try {
-          await browser.browsingData.remove(
-            { origins: [origin] },
-            {
-              localStorage: true,
-              indexedDB: true
-            }
-          );
-          console.log("[PrivacyGuard] storage_manager: cleared storage for", origin);
-        } catch (e) {
-        }
-        pgTabUrls.delete(tabId);
-      }
-    }
-  } catch (e) {
-    console.warn("[PrivacyGuard] storage_manager: error clearing storage", e);
+    await browser.browsingData.remove(
+      { origins: [origin] },
+      { localStorage: true, indexedDB: true }
+    );
+    pgLog("debug", "storage_manager", "Cleared storage for origin", { origin: origin });
+  } catch (error) {
+    pgLog("warn", "storage_manager", "Failed to clear origin storage", {
+      origin: origin,
+      error: String(error)
+    });
   }
+}
+
+pgSubscribeSettings(function(nextSettings) {
+  pgStorageSettings = Object.assign({}, PrivacyGuardConstants.DEFAULT_SETTINGS, nextSettings);
+});
+
+browser.tabs.onUpdated.addListener(function(tabId, _changeInfo, tab) {
+  pgTrackTabOrigin(tabId, tab);
+});
+
+browser.tabs.onRemoved.addListener(function(tabId) {
+  pgHandleTabClosed(tabId).catch(function(error) {
+    pgLog("warn", "storage_manager", "Tab close handler failed", { error: String(error) });
+  });
 });

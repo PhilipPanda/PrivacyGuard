@@ -1,7 +1,8 @@
 var PrivacyGuardConstants = {
   STORAGE_KEY: "settings",
+  STORAGE_SCHEMA_KEY: "settings_schema_version",
   
-  VERSION: "0.1.6",
+  VERSION: "0.1.7",
   EXTENSION_NAME: "PrivacyGuard",
 
   DEFAULT_SETTINGS: {

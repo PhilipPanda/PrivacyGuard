@@ -1,75 +1,50 @@
-browser.runtime.onMessage.addListener(async (msg, sender) => {
+browser.runtime.onMessage.addListener(async function(msg, sender) {
   try {
-    if (!msg || typeof msg !== "object" || !msg.type) {
-      return { error: "Invalid message format" };
+    if (!sender || sender.id !== browser.runtime.id) {
+      return { error: "Unauthorized message sender" };
     }
 
-    const msgType = String(msg.type);
-
-    if (msgType === PrivacyGuardConstants.MSG.GET_SETTINGS || msgType === "GET_SETTINGS") {
-      const s = await pgGetSettings();
-      return { settings: s };
+    var validated = pgValidateMessage(msg);
+    if (!validated.ok) {
+      return { error: validated.error };
     }
 
-    if (msgType === PrivacyGuardConstants.MSG.SET_SETTINGS) {
-      if (!msg.settings || typeof msg.settings !== "object") {
-        return { error: "Invalid settings object" };
+    switch (validated.type) {
+      case PG_MESSAGE_TYPES.GET_SETTINGS: {
+        return { settings: await pgGetSettings() };
       }
-      
-      const cur = await pgGetSettings();
-      const next = Object.assign({}, cur, msg.settings);
-      await pgSetSettings(next);
-      return { ok: true, settings: next };
-    }
-
-    if (msgType === PrivacyGuardConstants.MSG.ADBLOCK_GET_STATUS) {
-      if (typeof pgAdblockGetStatus === "function") {
-        return { status: pgAdblockGetStatus() };
+      case PG_MESSAGE_TYPES.SET_SETTINGS: {
+        return { ok: true, settings: await pgSetSettings(msg.settings) };
       }
-      return { status: null };
-    }
-
-    if (msgType === PrivacyGuardConstants.MSG.ADBLOCK_UPDATE) {
-      if (typeof pgAdblockUpdateLists === "function") {
-        return { status: await pgAdblockUpdateLists() };
+      case PG_MESSAGE_TYPES.ADBLOCK_GET_STATUS: {
+        return { status: typeof pgAdblockGetStatus === "function" ? pgAdblockGetStatus() : null };
       }
-      return { status: null };
-    }
-
-    if (msgType === PrivacyGuardConstants.MSG.HTTPWARN_ALLOW_ONCE) {
-      const tabId = Number(msg.tabId);
-      const url = String(msg.url || "");
-      
-      if (!Number.isFinite(tabId) || tabId < 0) {
-        return { ok: false, error: "Invalid tabId" };
+      case PG_MESSAGE_TYPES.ADBLOCK_UPDATE: {
+        return { status: typeof pgAdblockUpdateLists === "function" ? await pgAdblockUpdateLists() : null };
       }
-      
-      if (!url) {
-        return { ok: false, error: "Invalid url" };
+      case PG_MESSAGE_TYPES.HTTPWARN_ALLOW_ONCE: {
+        var tabId = Number(msg.tabId);
+        var url = String(msg.url || "");
+        return { ok: typeof pgHttpWarnAllowOnce === "function" ? pgHttpWarnAllowOnce(tabId, url) : false };
       }
-      
-      const ok = pgHttpWarnAllowOnce(tabId, url);
-      return { ok: ok };
-    }
-
-    if (msgType === "GET_STATS") {
-      if (typeof pgGetStats === "function") {
-        return { stats: pgGetStats() };
+      case PG_MESSAGE_TYPES.GET_STATS: {
+        return { stats: typeof pgGetStats === "function" ? pgGetStats() : null };
       }
-      return { stats: null };
-    }
-
-    if (msgType === "RESET_STATS") {
-      if (typeof pgResetStats === "function") {
-        return { stats: await pgResetStats() };
+      case PG_MESSAGE_TYPES.RESET_STATS: {
+        return { stats: typeof pgResetStats === "function" ? await pgResetStats() : null };
       }
-      return { stats: null };
+      case PG_MESSAGE_TYPES.GET_FEATURES: {
+        return { features: pgListFeatures() };
+      }
+      default: {
+        return { error: "Unknown message type" };
+      }
     }
-
-    return { error: "Unknown message type" };
-  } catch (e) {
-    const errorMsg = String(e && e.message ? e.message : e);
-    console.error("[PrivacyGuard] messaging: error handling message", msg?.type, errorMsg);
-    return { error: errorMsg };
+  } catch (error) {
+    pgLog("error", "messaging", "Failed to process message", {
+      type: msg && msg.type ? msg.type : null,
+      error: String(error && error.message ? error.message : error)
+    });
+    return { error: "Internal message handling error" };
   }
 });

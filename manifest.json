@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "PrivacyGuard",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Your go-to privacy tool for Firefox.",
   "icons": {
     "48": "assets/icons/icon-48.png",
@@ -25,8 +25,15 @@
     }
   },
   "background": {
+    "persistent": false,
     "scripts": [
       "src/common/constants.js",
+      "src/common/utils.js",
+      "src/background/core/logger.js",
+      "src/background/core/feature_registry.js",
+      "src/background/core/features.js",
+      "src/background/core/settings_manager.js",
+      "src/background/core/message_schema.js",
       "src/background/settings.js",
       "src/background/modules/privacy_stats.js",
       "src/background/modules/adblocker.js",
@@ -51,6 +58,7 @@
       "src/background/index.js"
     ]
   },
+  "content_security_policy": "script-src 'self'; object-src 'none'; base-uri 'self'",
   "browser_action": {
     "default_title": "PrivacyGuard",
     "default_popup": "src/popup/popup.html"
@@ -62,7 +70,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/anti_fingerprint.js", "src/content/user_agent_manager.js", "src/content/storage_manager.js", "src/content/beacon_blocker.js"],
+      "js": ["src/content/anti_fingerprint.js", "src/content/storage_manager.js", "src/content/beacon_blocker.js"],
       "run_at": "document_start",
       "all_frames": true
     },
@@ -75,7 +83,6 @@
   "web_accessible_resources": [
     "src/warning/http_warning.html",
     "src/warning/http_warning.css",
-    "src/warning/http_warning.js",
-    "src/common/constants.js"
+    "src/warning/http_warning.js"
   ]
 }

@@ -2,17 +2,11 @@ const PG_ICON_ON = "../../assets/icons/icon-1024-on.png";
 const PG_ICON_OFF = "../../assets/icons/icon-1024-off.png";
 
 async function pgGetSettings() {
-  const res = await browser.runtime.sendMessage({
-    type: PrivacyGuardConstants.MSG.GET_SETTINGS
-  });
-  return res.settings || {};
+  return pgApiGetSettings();
 }
 
 async function pgSetSettings(changes) {
-  await browser.runtime.sendMessage({
-    type: PrivacyGuardConstants.MSG.SET_SETTINGS,
-    settings: changes
-  });
+  await pgApiSetSettings(changes);
 }
 
 function pgForceParticlesLayerPopup() {
@@ -80,7 +74,7 @@ async function pgLoadPopup() {
   const s = await pgGetSettings();
   pgSetUIEnabled(!!s.enabled);
   try {
-    const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
+    const res = await pgSendMessage({ type: "GET_STATS" });
     const statsEl = document.getElementById("popupStats");
     if (statsEl && res && res.stats) {
       const t = (res.stats.blockedAds || 0) + (res.stats.blockedBeacons || 0) + (res.stats.blockedCookies || 0) +

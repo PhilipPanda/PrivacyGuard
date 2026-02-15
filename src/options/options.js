@@ -1,26 +1,20 @@
 async function pgGetSettings() {
-  const res = await browser.runtime.sendMessage({
-    type: PrivacyGuardConstants.MSG.GET_SETTINGS
-  });
-  return res.settings || {};
+  return pgApiGetSettings();
 }
 
 async function pgSaveOptions(changes) {
-  await browser.runtime.sendMessage({
-    type: PrivacyGuardConstants.MSG.SET_SETTINGS,
-    settings: changes
-  });
+  await pgApiSetSettings(changes);
 }
 
 async function pgGetAdblockStatus() {
-  const res = await browser.runtime.sendMessage({
+  const res = await pgSendMessage({
     type: PrivacyGuardConstants.MSG.ADBLOCK_GET_STATUS
   });
   return res.status || null;
 }
 
 async function pgUpdateAdblockLists() {
-  const res = await browser.runtime.sendMessage({
+  const res = await pgSendMessage({
     type: PrivacyGuardConstants.MSG.ADBLOCK_UPDATE
   });
   return res.status || null;
@@ -319,7 +313,7 @@ async function pgLoadPrivacyStats() {
   if (!statsEl) return;
 
   try {
-    const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
+    const res = await pgSendMessage({ type: "GET_STATS" });
     if (res && res.stats) {
       const stats = res.stats;
       const total = (stats.blockedAds || 0) +
@@ -331,18 +325,20 @@ async function pgLoadPrivacyStats() {
 
       const lastReset = stats.lastReset ? new Date(stats.lastReset).toLocaleString() : "never";
 
-      statsEl.innerHTML = `
-        <div><strong>Total Blocked:</strong> ${total.toLocaleString()}</div>
-        <div><strong>Ads Blocked:</strong> ${(stats.blockedAds || 0).toLocaleString()}</div>
-        <div><strong>Trackers Blocked:</strong> ${(stats.blockedTrackers || 0).toLocaleString()}</div>
-        <div><strong>Beacons Blocked:</strong> ${(stats.blockedBeacons || 0).toLocaleString()}</div>
-        <div><strong>Cookies Blocked:</strong> ${(stats.blockedCookies || 0).toLocaleString()}</div>
-        <div><strong>Fingerprints Blocked:</strong> ${(stats.blockedFingerprints || 0).toLocaleString()}</div>
-        <div><strong>Crypto Miners Blocked:</strong> ${(stats.blockedCryptominers || 0).toLocaleString()}</div>
-        <div><strong>URLs Cleaned:</strong> ${(stats.cleanedUrls || 0).toLocaleString()}</div>
-        <div><strong>HTTPS Upgrades:</strong> ${(stats.upgradedHttps || 0).toLocaleString()}</div>
-        <div style="margin-top: 8px; font-size: 0.9em; opacity: 0.7;">Last reset: ${lastReset}</div>
-      `;
+      const lines = [
+        `Total Blocked: ${total.toLocaleString()}`,
+        `Ads Blocked: ${(stats.blockedAds || 0).toLocaleString()}`,
+        `Trackers Blocked: ${(stats.blockedTrackers || 0).toLocaleString()}`,
+        `Beacons Blocked: ${(stats.blockedBeacons || 0).toLocaleString()}`,
+        `Cookies Blocked: ${(stats.blockedCookies || 0).toLocaleString()}`,
+        `Fingerprints Blocked: ${(stats.blockedFingerprints || 0).toLocaleString()}`,
+        `Crypto Miners Blocked: ${(stats.blockedCryptominers || 0).toLocaleString()}`,
+        `URLs Cleaned: ${(stats.cleanedUrls || 0).toLocaleString()}`,
+        `HTTPS Upgrades: ${(stats.upgradedHttps || 0).toLocaleString()}`,
+        `Last reset: ${lastReset}`
+      ];
+      statsEl.textContent = lines.join("\n");
+      statsEl.style.whiteSpace = "pre-line";
     } else {
       statsEl.textContent = "Statistics unavailable";
     }
@@ -745,7 +741,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       resetStatsBtn.disabled = true;
       try {
-        await browser.runtime.sendMessage({ type: "RESET_STATS" });
+        await pgSendMessage({ type: "RESET_STATS" });
         await pgLoadPrivacyStats();
       } catch (e) {
         console.error("[PrivacyGuard] options: failed to reset stats", e);
@@ -770,4 +766,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
-
