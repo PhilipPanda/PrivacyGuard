@@ -60,26 +60,6 @@
 
 ---
 
-## 🏗️ Project Structure
-
-```
-PrivacyGuard/
-├── manifest.json            # Extension manifest (Manifest V2)
-├── assets/
-│   ├── icons/               # Extension icons (48, 96, 128, 1024)
-│   └── vendor/              # Third-party libraries (particles.js)
-└── src/
-    ├── common/              # Shared constants & utilities
-    ├── background/          # Background scripts & modules
-    │   └── modules/         # Feature modules (19 modules)
-    ├── content/             # Content scripts
-    ├── popup/               # Popup UI (HTML, CSS, JS)
-    ├── options/             # Options/settings page
-    └── warning/             # HTTP warning interstitial
-```
-
----
-
 <p align="center">
   Built by <a href="https://templeenterprise.com"><b>Temple Enterprise LLC</b></a>
 </p>
