@@ -1,39 +1,84 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>PrivacyGuard | Warning</title>
-    <link rel="stylesheet" href="http_warning.css" />
-    <link rel="icon" type="image/x-icon" href="../../assets/icons/icon-128.png" />
-  </head>
-  <body>
-    <div class="page">
-      <div class="card">
-        <div class="badge">HTTP WARNING</div>
-        <h1>Connection is not secure</h1>
-        <p class="sub">
-          This site is using <span class="mono">http://</span>. Your traffic may be visible or modified on the network.
-        </p>
 
-        <div class="box">
-          <div class="label">Destination</div>
-          <div id="dest" class="mono"></div>
-        </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PrivacyGuard | Warning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="http_warning.css" />
+  <link rel="icon" type="image/x-icon" href="../../assets/icons/icon-128.png" />
+</head>
 
-        <div class="btnRow">
-          <button id="goBack" class="btnSecondary" type="button">Go Back</button>
-          <button id="tryHttps" class="btnSecondary" type="button">Try HTTPS</button>
-          <button id="continue" class="btnDanger" type="button">Continue</button>
-        </div>
+<body>
+  <div class="page">
+    <div class="card">
+      <!-- Animated Warning Icon -->
+      <div class="warningIcon" aria-hidden="true">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
 
-        <div class="note">
-          Tip: Turn on <b>Always HTTPS</b> in PrivacyGuard to auto-upgrade links.
-        </div>
+      <div class="badge">HTTP WARNING</div>
+
+      <h1>Connection not secure</h1>
+      <p class="sub">
+        This site uses <span class="mono">http://</span> — your traffic may be visible or modified on the network.
+      </p>
+
+      <div class="box">
+        <div class="boxLabel">Destination URL</div>
+        <div id="dest" class="mono"></div>
+      </div>
+
+      <div class="btnRow">
+        <button id="goBack" class="btnSecondary" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Go Back
+        </button>
+        <button id="tryHttps" class="btnSecondary" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Try HTTPS
+        </button>
+        <button id="continue" class="btnDanger" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          Continue Anyway
+        </button>
+      </div>
+
+      <div class="note">
+        <strong>Tip:</strong> Enable <b>Always HTTPS</b> in PrivacyGuard settings to auto-upgrade all links.
       </div>
     </div>
 
-    <script src="../common/constants.js"></script>
-    <script src="http_warning.js"></script>
-  </body>
+    <div class="footer">
+      PrivacyGuard • Built by <a href="https://templeenterprise.com" id="companyLink" class="companyLink">Temple
+        Enterprise LLC</a>
+    </div>
+  </div>
+
+  <script src="../common/constants.js"></script>
+  <script src="http_warning.js"></script>
+</body>
+
 </html>

@@ -1,452 +1,651 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>PrivacyGuard | Settings</title>
-    <link rel="stylesheet" href="options.css" />
-    <link rel="icon" type="image/x-icon" href="../../assets/icons/icon-128.png" />
-  </head>
-  <body>
-    <div id="pgParticles" aria-hidden="true"></div>
 
-    <div class="page">
-      <header class="header">
-        <h1>PrivacyGuard Settings</h1>
-        <p class="sub">Control PrivacyGuard’s core behavior.</p>
-      </header>
+<head>
+  <meta charset="utf-8" />
+  <title>PrivacyGuard | Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="options.css" />
+  <link rel="icon" type="image/x-icon" href="../../assets/icons/icon-128.png" />
+</head>
 
-      <main class="card">
-        <div class="row">
-          <div class="left">
-            <div class="label">Enabled</div>
-            <div class="hint">Master switch for all PrivacyGuard features</div>
-          </div>
-          <input id="enabled" class="toggle" type="checkbox" />
+<body>
+  <div id="pgParticles" aria-hidden="true"></div>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="toastContainer" aria-live="polite"></div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebarHeader">
+        <img src="../../assets/icons/icon-96.png" alt="" class="sidebarLogo" />
+        <div>
+          <div class="sidebarTitle">PrivacyGuard</div>
+          <div class="sidebarVersion">v0.1.8</div>
+        </div>
+      </div>
+
+      <nav class="sidebarNav">
+        <a href="#section-general" class="navItem active" data-section="section-general">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>General</span>
+        </a>
+        <a href="#section-adblock" class="navItem" data-section="section-adblock">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+          </svg>
+          <span>Ad & Tracker Blocking</span>
+        </a>
+        <a href="#section-network" class="navItem" data-section="section-network">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <span>Network</span>
+        </a>
+        <a href="#section-privacy" class="navItem" data-section="section-privacy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span>Privacy</span>
+        </a>
+        <a href="#section-cookies" class="navItem" data-section="section-cookies">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+          <span>Cookies & Storage</span>
+        </a>
+        <a href="#section-stats" class="navItem" data-section="section-stats">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          <span>Statistics</span>
+        </a>
+      </nav>
+
+      <div class="sidebarFooter">
+        <a href="https://templeenterprise.com" id="sidebarCompanyLink" class="companyLink">Temple Enterprise LLC</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="mainContent">
+      <!-- ═══ General ═══ -->
+      <section id="section-general" class="section">
+        <div class="sectionHeader">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <h2>General</h2>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Ad Blocking</div>
-              <div class="badgeExperimental">⚠️ EXPERIMENTAL</div>
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Master Switch</div>
+              <div class="hint">Enable or disable all PrivacyGuard features</div>
             </div>
-            <div class="hint">Blocks requests to known ad domains. May break some sites.</div>
+            <input id="enabled" class="toggle" type="checkbox" />
           </div>
-          <input id="blockAds" class="toggle" type="checkbox" />
+        </div>
+      </section>
+
+      <!-- ═══ Ad & Tracker Blocking ═══ -->
+      <section id="section-adblock" class="section">
+        <div class="sectionHeader">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+          </svg>
+          <h2>Ad & Tracker Blocking</h2>
         </div>
 
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="labelRow">
+                <div class="label">Ad Blocking</div>
+                <div class="badge badgeWarning">EXPERIMENTAL</div>
+              </div>
+              <div class="hint">Blocks requests to known ad domains. May break some sites.</div>
+            </div>
+            <input id="blockAds" class="toggle" type="checkbox" />
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <div class="left">
               <div class="label">Block Trackers</div>
+              <div class="hint">Blocks known tracking domains and analytics services.</div>
             </div>
-            <div class="hint">Blocks known tracking domains and analytics services.</div>
+            <input id="blockTrackers" class="toggle" type="checkbox" />
           </div>
-          <input id="blockTrackers" class="toggle" type="checkbox" />
-        </div>
 
-        <div class="row rowStack">
-          <div class="status" id="adblockStatus">Loading adblock status…</div>
-          <div class="btnRow">
-            <button class="btnSecondary" id="refreshAdblock">Update Blocklists</button>
-            <button class="btnSecondary" id="openCanYouBlockIt">Open CanYouBlockIt Test</button>
-          </div>
-        </div>
+          <div class="divider"></div>
 
-        <div class="row rowStack">
-          <div class="status">Custom blocklist (one domain per line):</div>
-          <textarea id="adblockCustomBlocklist" class="textArea" rows="4" spellcheck="false" placeholder="ads.example.com&#10;tracker.example"></textarea>
-          <div class="status">Custom allowlist (one domain per line):</div>
-          <textarea id="adblockCustomAllowlist" class="textArea" rows="3" spellcheck="false" placeholder="cdn.example.com"></textarea>
-          <div class="note">Allowlist wins over blocklist for matching domains or subdomains.</div>
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">Disable adblock on sites (one domain per line):</div>
-          <textarea id="adblockDisabledSites" class="textArea" rows="3" spellcheck="false" placeholder="example.com"></textarea>
-          <div class="note">Disables ad and tracker blocking only for these sites. Other privacy features still apply.</div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Decoy Traffic</div>
-            </div>
-            <div class="hint">
-              Generates small background HTTPS requests to blend your traffic pattern.
-              Uses bandwidth and does not make you anonymous.
+          <div class="row rowStack">
+            <div class="statusText" id="adblockStatus">Loading adblock status…</div>
+            <div class="btnRow">
+              <button class="btnSecondary" id="refreshAdblock">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+                Update Blocklists
+              </button>
+              <button class="btnSecondary" id="openCanYouBlockIt">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                Test Ad Blocking
+              </button>
             </div>
           </div>
-          <input id="decoyTraffic" class="toggle" type="checkbox" />
         </div>
 
-        <div class="row rowStack">
-          <div class="status">
-            Interval (random): between
-            <input id="decoyMinInterval" class="miniInput" type="text" placeholder="10m" />
-            and
-            <input id="decoyMaxInterval" class="miniInput" type="text" placeholder="2h" />
-          </div>
-          <div class="note">Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code></div>
-          <div class="status">Sites (one per line, domains only):</div>
-          <textarea id="decoySites" class="textArea" rows="6" spellcheck="false"></textarea>
+        <div class="card">
+          <div class="cardTitle">Custom Blocklist</div>
+          <div class="hint" style="margin-bottom:8px">One domain per line</div>
+          <textarea id="adblockCustomBlocklist" class="textArea" rows="4" spellcheck="false"
+            placeholder="ads.example.com&#10;tracker.example"></textarea>
+
+          <div class="cardTitle" style="margin-top:14px">Custom Allowlist</div>
+          <div class="hint" style="margin-bottom:8px">One domain per line — allowlist wins over blocklist</div>
+          <textarea id="adblockCustomAllowlist" class="textArea" rows="3" spellcheck="false"
+            placeholder="cdn.example.com"></textarea>
+
+          <div class="cardTitle" style="margin-top:14px">Disabled Sites</div>
+          <div class="hint" style="margin-bottom:8px">Disable ad/tracker blocking for these sites</div>
+          <textarea id="adblockDisabledSites" class="textArea" rows="3" spellcheck="false"
+            placeholder="example.com"></textarea>
+        </div>
+      </section>
+
+      <!-- ═══ Network ═══ -->
+      <section id="section-network" class="section">
+        <div class="sectionHeader">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <h2>Network</h2>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Proxy</div>
-              <div class="badgeExperimental">⚠️ EXPERIMENTAL</div>
+        <!-- HTTPS -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Always HTTPS</div>
+              <div class="hint">Upgrade http:// links to https:// automatically</div>
             </div>
-            <div class="hint">Routes browser traffic through a proxy.</div>
-          </div>
-          <input id="proxyEnabled" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">
-            Type:
-            <select id="proxyType" class="select">
-              <option value="socks">SOCKS5</option>
-              <option value="http">HTTP</option>
-              <option value="https">HTTPS</option>
-            </select>
-          </div>
-
-          <div class="status">
-            Host:
-            <input id="proxyHost" class="miniInputWide" type="text" placeholder="127.0.0.1" />
-            Port:
-            <input id="proxyPort" class="miniInput" type="number" min="1" max="65535" />
-          </div>
-
-          <div class="status">
-            Username:
-            <input id="proxyUsername" class="miniInputWide" type="text" placeholder="" />
-            Password:
-            <input id="proxyPassword" class="miniInputWide" type="password" placeholder="" />
-          </div>
-
-          <div class="status">
-            <label class="checkRow">
-              <input id="proxyDNS" type="checkbox" />
-              Proxy DNS (recommended for SOCKS5)
-            </label>
-          </div>
-
-          <div class="status" id="proxyStatus">Proxy status: unknown</div>
-
-          <div class="note">
-            If applying the proxy fails, go to <code>about:addons</code> → PrivacyGuard → “Run in Private Windows” = Allow.
+            <input id="alwaysHTTPS" class="toggle" type="checkbox" />
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Anti-fingerprinting</div>
+        <!-- Strip Tracking Params -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Strip Tracking Parameters</div>
+              <div class="hint">Remove UTM, fbclid, gclid, and similar parameters from URLs</div>
             </div>
-            <div class="hint">Sends privacy signals and blocks some fingerprinting scripts.</div>
-          </div>
-          <input id="antiFingerprint" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Referrer Manager</div>
-            </div>
-            <div class="hint">Controls what referrer information is sent to websites.</div>
-          </div>
-          <input id="manageReferrer" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">
-            Mode:
-            <select id="referrerMode" class="select">
-              <option value="no-referrer">No Referrer</option>
-              <option value="same-origin">Same Origin Only</option>
-              <option value="origin">Origin Only</option>
-              <option value="strict-origin">Strict Origin</option>
-            </select>
-          </div>
-          <div class="note">
-            <b>No Referrer:</b> Never send referrer header<br>
-            <b>Same Origin Only:</b> Send referrer only for same-domain requests<br>
-            <b>Origin Only:</b> Send only domain, not full URL<br>
-            <b>Strict Origin:</b> Send origin for same-origin, none for cross-origin
+            <input id="stripUTMParams" class="toggle" type="checkbox" />
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">User-Agent Manager</div>
-            </div>
-            <div class="hint">Spoof or randomize your browser's user-agent string to prevent fingerprinting.</div>
-          </div>
-          <input id="manageUserAgent" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">
-            Mode:
-            <select id="userAgentMode" class="select">
-              <option value="random">Random</option>
-              <option value="firefox">Firefox</option>
-              <option value="chrome">Chrome</option>
-              <option value="safari">Safari</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-          <div class="status" id="customUserAgentContainer" style="display: none;">
-            Custom User-Agent:
-            <input id="customUserAgent" class="miniInputWide" type="text" placeholder="Mozilla/5.0..." style="width: 100%; margin-top: 6px;" />
-          </div>
-          <div class="note">
-            <b>Random:</b> Randomly selects a user-agent for each page<br>
-            <b>Firefox/Chrome/Safari:</b> Spoofs as that browser<br>
-            <b>Custom:</b> Use your own user-agent string
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Block Third-Party Cookies</div>
-            </div>
-            <div class="hint">Prevents cookies from third-party domains. May break some login features.</div>
-          </div>
-          <input id="blockThirdPartyCookies" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Auto-Delete Cookies</div>
-            </div>
-            <div class="hint">Automatically delete cookies older than the specified lifetime.</div>
-          </div>
-          <input id="autoDeleteCookies" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">
-            Cookie Lifetime:
-            <input id="cookieLifetime" class="miniInput" type="text" placeholder="7d" />
-          </div>
-          <div class="note">Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code>. Cookies older than this will be automatically deleted.</div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Block Web Beacons</div>
-            </div>
-            <div class="hint">Blocks tracking pixels, beacons, and analytics requests. Prevents invisible tracking.</div>
-          </div>
-          <input id="blockBeacons" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Block WebRTC Leaks</div>
-            </div>
-            <div class="hint">Blocks WebRTC requests that could leak your real IP address.</div>
-          </div>
-          <input id="blockWebRTC" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Block Social Widgets</div>
-            </div>
-            <div class="hint">Blocks third-party social embed scripts (Facebook, Twitter, etc.).</div>
-          </div>
-          <input id="blockSocialWidgets" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Block Crypto Miners</div>
-            </div>
-            <div class="hint">Blocks in-browser cryptocurrency mining scripts. Enabled by default.</div>
-          </div>
-          <input id="blockCryptoMiners" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Disable Hyperlink Auditing</div>
-            </div>
-            <div class="hint">Removes link ping attributes that report when you click links.</div>
-          </div>
-          <input id="disableHyperlinkAuditing" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Storage Manager</div>
-            </div>
-            <div class="hint">Control localStorage, sessionStorage, and IndexedDB to prevent tracking.</div>
-          </div>
-          <input id="manageStorage" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">
-            Mode:
-            <select id="storageMode" class="select">
-              <option value="clear-on-close">Clear on Tab Close</option>
-              <option value="clear-on-navigation">Clear on Navigation</option>
-              <option value="block">Block All Storage</option>
-            </select>
-          </div>
-          <div class="note">
-            <b>Clear on Tab Close:</b> Automatically clears storage when you close a tab<br>
-            <b>Clear on Navigation:</b> Clears storage when navigating between pages<br>
-            <b>Block All Storage:</b> Prevents websites from using localStorage, sessionStorage, and IndexedDB
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Site Whitelist</div>
-            </div>
-            <div class="hint">Disable PrivacyGuard protections on trusted websites.</div>
-          </div>
-          <input id="siteWhitelist" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">Whitelisted sites (one per line, domains only):</div>
-          <textarea id="whitelistedSites" class="textArea" rows="4" spellcheck="false" placeholder="example.com&#10;trusted-site.org"></textarea>
-          <div class="note">Add domains where you want PrivacyGuard protections disabled. Useful for sites that break with privacy features enabled.</div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
+        <!-- Request Timeout -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
               <div class="label">Request Timeout</div>
+              <div class="hint">Cancel slow requests to prevent tracking delays</div>
             </div>
-            <div class="hint">Add timeout to slow requests to prevent tracking delays.</div>
+            <input id="requestTimeout" class="toggle" type="checkbox" />
           </div>
-          <input id="requestTimeout" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="row rowStack">
-          <div class="status">
-            Timeout (milliseconds):
-            <input id="requestTimeoutMs" class="miniInput" type="number" min="1000" max="300000" placeholder="30000" />
-          </div>
-          <div class="note">Requests taking longer than this will be cancelled. Default: 30000ms (30 seconds). Range: 1000-300000ms.</div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="label">Always HTTPS</div>
-            <div class="hint">Upgrade http:// links to https:// automatically</div>
-          </div>
-          <input id="alwaysHTTPS" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="label">Strip tracking params</div>
-            <div class="hint">Remove UTM, fbclid, gclid, and similar parameters</div>
-          </div>
-          <input id="stripUTMParams" class="toggle" type="checkbox" />
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="label">Maintenance</div>
-            <div class="hint">Quick privacy cleanup actions</div>
+          <div class="divider"></div>
+          <div class="row rowStack">
+            <div class="fieldGroup">
+              <label class="fieldLabel">Timeout (ms)</label>
+              <input id="requestTimeoutMs" class="miniInput" type="number" min="1000" max="300000"
+                placeholder="30000" />
+            </div>
+            <div class="note">Range: 1,000–300,000ms. Default: 30,000ms (30s).</div>
           </div>
         </div>
 
-        <div class="row rowStack">
-          <div class="note">Clearing cookies will sign you out of most websites.</div>
+        <!-- Proxy -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="labelRow">
+                <div class="label">Proxy</div>
+                <div class="badge badgeWarning">EXPERIMENTAL</div>
+              </div>
+              <div class="hint">Routes browser traffic through a proxy server.</div>
+            </div>
+            <input id="proxyEnabled" class="toggle" type="checkbox" />
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row rowStack">
+            <div class="fieldRow">
+              <div class="fieldGroup">
+                <label class="fieldLabel">Type</label>
+                <select id="proxyType" class="select">
+                  <option value="socks">SOCKS5</option>
+                  <option value="http">HTTP</option>
+                  <option value="https">HTTPS</option>
+                </select>
+              </div>
+              <div class="fieldGroup">
+                <label class="fieldLabel">Host</label>
+                <input id="proxyHost" class="miniInputWide" type="text" placeholder="127.0.0.1" />
+              </div>
+              <div class="fieldGroup">
+                <label class="fieldLabel">Port</label>
+                <input id="proxyPort" class="miniInput" type="number" min="1" max="65535" />
+              </div>
+            </div>
+
+            <div class="fieldRow" style="margin-top:10px">
+              <div class="fieldGroup">
+                <label class="fieldLabel">Username</label>
+                <input id="proxyUsername" class="miniInputWide" type="text" placeholder="Optional" />
+              </div>
+              <div class="fieldGroup">
+                <label class="fieldLabel">Password</label>
+                <input id="proxyPassword" class="miniInputWide" type="password" placeholder="Optional" />
+              </div>
+            </div>
+
+            <label class="checkRow" style="margin-top:10px">
+              <input id="proxyDNS" type="checkbox" />
+              <span>Proxy DNS (recommended for SOCKS5)</span>
+            </label>
+
+            <div class="statusText" id="proxyStatus" style="margin-top:10px">Proxy status: unknown</div>
+            <div class="note">If applying fails: <code>about:addons</code> → PrivacyGuard → "Run in Private Windows" =
+              Allow.</div>
+          </div>
+        </div>
+
+        <!-- Decoy Traffic -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Decoy Traffic</div>
+              <div class="hint">Generates small background HTTPS requests to blend your traffic pattern. Uses bandwidth.
+              </div>
+            </div>
+            <input id="decoyTraffic" class="toggle" type="checkbox" />
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row rowStack">
+            <div class="fieldRow">
+              <div class="fieldGroup">
+                <label class="fieldLabel">Min Interval</label>
+                <input id="decoyMinInterval" class="miniInput" type="text" placeholder="10m" />
+              </div>
+              <div class="fieldGroup">
+                <label class="fieldLabel">Max Interval</label>
+                <input id="decoyMaxInterval" class="miniInput" type="text" placeholder="2h" />
+              </div>
+            </div>
+            <div class="note" style="margin-bottom:10px">Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>,
+              <code>1d</code>
+            </div>
+
+            <label class="fieldLabel">Sites (one per line)</label>
+            <textarea id="decoySites" class="textArea" rows="5" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Privacy ═══ -->
+      <section id="section-privacy" class="section">
+        <div class="sectionHeader">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <h2>Privacy</h2>
+        </div>
+
+        <!-- Anti-fingerprinting -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Anti-Fingerprinting</div>
+              <div class="hint">Sends privacy signals and blocks fingerprinting scripts.</div>
+            </div>
+            <input id="antiFingerprint" class="toggle" type="checkbox" />
+          </div>
+        </div>
+
+        <!-- Referrer Manager -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Referrer Manager</div>
+              <div class="hint">Controls what referrer information is sent to websites.</div>
+            </div>
+            <input id="manageReferrer" class="toggle" type="checkbox" />
+          </div>
+          <div class="divider"></div>
+          <div class="row rowStack">
+            <div class="fieldGroup">
+              <label class="fieldLabel">Mode</label>
+              <select id="referrerMode" class="select">
+                <option value="no-referrer">No Referrer</option>
+                <option value="same-origin">Same Origin Only</option>
+                <option value="origin">Origin Only</option>
+                <option value="strict-origin">Strict Origin</option>
+              </select>
+            </div>
+            <div class="note">
+              <b>No Referrer:</b> Never send referrer<br>
+              <b>Same Origin:</b> Send only for same-domain<br>
+              <b>Origin Only:</b> Send domain, not full URL<br>
+              <b>Strict Origin:</b> Origin for same-origin, none for cross-origin
+            </div>
+          </div>
+        </div>
+
+        <!-- User-Agent Manager -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">User-Agent Manager</div>
+              <div class="hint">Spoof or randomize your browser's user-agent string.</div>
+            </div>
+            <input id="manageUserAgent" class="toggle" type="checkbox" />
+          </div>
+          <div class="divider"></div>
+          <div class="row rowStack">
+            <div class="fieldGroup">
+              <label class="fieldLabel">Mode</label>
+              <select id="userAgentMode" class="select">
+                <option value="random">Random</option>
+                <option value="firefox">Firefox</option>
+                <option value="chrome">Chrome</option>
+                <option value="safari">Safari</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="fieldGroup" id="customUserAgentContainer" style="display:none; margin-top:8px">
+              <label class="fieldLabel">Custom User-Agent</label>
+              <input id="customUserAgent" class="miniInputWide" type="text" placeholder="Mozilla/5.0..."
+                style="width:100%" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Block WebRTC -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Block WebRTC Leaks</div>
+              <div class="hint">Blocks WebRTC requests that could leak your real IP address.</div>
+            </div>
+            <input id="blockWebRTC" class="toggle" type="checkbox" />
+          </div>
+        </div>
+
+        <!-- Social Widgets -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Block Social Widgets</div>
+              <div class="hint">Blocks third-party social embed scripts (Facebook, Twitter, etc.).</div>
+            </div>
+            <input id="blockSocialWidgets" class="toggle" type="checkbox" />
+          </div>
+        </div>
+
+        <!-- Crypto Miners -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Block Crypto Miners</div>
+              <div class="hint">Blocks in-browser cryptocurrency mining scripts.</div>
+            </div>
+            <input id="blockCryptoMiners" class="toggle" type="checkbox" />
+          </div>
+        </div>
+
+        <!-- Beacons -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Block Web Beacons</div>
+              <div class="hint">Blocks tracking pixels, beacons, and analytics requests.</div>
+            </div>
+            <input id="blockBeacons" class="toggle" type="checkbox" />
+          </div>
+        </div>
+
+        <!-- Hyperlink Auditing -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Disable Hyperlink Auditing</div>
+              <div class="hint">Removes link ping attributes that report when you click links.</div>
+            </div>
+            <input id="disableHyperlinkAuditing" class="toggle" type="checkbox" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Cookies & Storage ═══ -->
+      <section id="section-cookies" class="section">
+        <div class="sectionHeader">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+          <h2>Cookies & Storage</h2>
+        </div>
+
+        <!-- Third-Party Cookies -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Block Third-Party Cookies</div>
+              <div class="hint">Prevents cookies from third-party domains. May break some login features.</div>
+            </div>
+            <input id="blockThirdPartyCookies" class="toggle" type="checkbox" />
+          </div>
+        </div>
+
+        <!-- Auto-Delete Cookies -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Auto-Delete Cookies</div>
+              <div class="hint">Automatically delete cookies older than the specified lifetime.</div>
+            </div>
+            <input id="autoDeleteCookies" class="toggle" type="checkbox" />
+          </div>
+          <div class="divider"></div>
+          <div class="row rowStack">
+            <div class="fieldGroup">
+              <label class="fieldLabel">Cookie Lifetime</label>
+              <input id="cookieLifetime" class="miniInput" type="text" placeholder="7d" />
+            </div>
+            <div class="note">Formats: <code>1s</code>, <code>10m</code>, <code>1h</code>, <code>1d</code>. Cookies
+              older than this are deleted.</div>
+          </div>
+        </div>
+
+        <!-- Storage Manager -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Storage Manager</div>
+              <div class="hint">Control localStorage, sessionStorage, and IndexedDB.</div>
+            </div>
+            <input id="manageStorage" class="toggle" type="checkbox" />
+          </div>
+          <div class="divider"></div>
+          <div class="row rowStack">
+            <div class="fieldGroup">
+              <label class="fieldLabel">Mode</label>
+              <select id="storageMode" class="select">
+                <option value="clear-on-close">Clear on Tab Close</option>
+                <option value="clear-on-navigation">Clear on Navigation</option>
+                <option value="block">Block All Storage</option>
+              </select>
+            </div>
+            <div class="note">
+              <b>Clear on Tab Close:</b> Clears storage when tab closes<br>
+              <b>Clear on Navigation:</b> Clears on page change<br>
+              <b>Block All:</b> Prevents all web storage use
+            </div>
+          </div>
+        </div>
+
+        <!-- Site Whitelist -->
+        <div class="card">
+          <div class="row">
+            <div class="left">
+              <div class="label">Site Whitelist</div>
+              <div class="hint">Disable protections on trusted sites.</div>
+            </div>
+            <input id="siteWhitelist" class="toggle" type="checkbox" />
+          </div>
+          <div class="divider"></div>
+          <div class="row rowStack">
+            <label class="fieldLabel">Whitelisted sites (one per line)</label>
+            <textarea id="whitelistedSites" class="textArea" rows="4" spellcheck="false"
+              placeholder="example.com&#10;trusted-site.org"></textarea>
+            <div class="note">Add domains where you want protections disabled.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Statistics & Maintenance ═══ -->
+      <section id="section-stats" class="section">
+        <div class="sectionHeader">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          <h2>Statistics & Maintenance</h2>
+        </div>
+
+        <!-- Privacy Stats -->
+        <div class="card">
+          <div class="cardTitle">Privacy Statistics</div>
+          <div id="privacyStats" class="statsGridOptions">
+            <div>Loading statistics...</div>
+          </div>
+          <div class="btnRow" style="margin-top:12px">
+            <button class="btnDanger btnSmall" id="resetStats">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              Reset Statistics
+            </button>
+          </div>
+        </div>
+
+        <!-- Maintenance -->
+        <div class="card">
+          <div class="cardTitle">Maintenance</div>
+          <div class="hint" style="margin-bottom:10px">Quick privacy cleanup actions</div>
+          <div class="note" style="margin-bottom:10px">⚠️ Clearing cookies will sign you out of most websites.</div>
           <div class="btnRow">
-            <button class="btnDanger" id="clearCookies">Clear All Cookies</button>
+            <button class="btnDanger" id="clearCookies">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-2 14H7L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+              </svg>
+              Clear All Cookies
+            </button>
           </div>
         </div>
 
-        <div class="row rowStack">
-          <div class="status">Export or import your PrivacyGuard settings as JSON.</div>
+        <!-- Import/Export -->
+        <div class="card">
+          <div class="cardTitle">Settings Backup</div>
+          <div class="hint" style="margin-bottom:10px">Export or import your PrivacyGuard settings as JSON.</div>
           <div class="btnRow">
-            <button class="btnSecondary" id="exportSettings">Export Settings</button>
-            <button class="btnSecondary" id="importSettings">Import Settings</button>
+            <button class="btnSecondary" id="exportSettings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export Settings
+            </button>
+            <button class="btnSecondary" id="importSettings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Import Settings
+            </button>
             <input type="file" id="importSettingsFile" accept=".json,application/json" style="display:none" />
           </div>
         </div>
+      </section>
 
-        <div class="divider"></div>
-
-        <div class="row">
-          <div class="left">
-            <div class="labelRow">
-              <div class="label">Privacy Statistics</div>
-            </div>
-            <div class="hint">View statistics about blocked requests and privacy protections.</div>
-          </div>
-        </div>
-
-        <div class="row rowStack">
-          <div class="status" id="privacyStats">
-            <div>Loading statistics...</div>
-          </div>
-          <div class="btnRow">
-            <button class="btnSecondary" id="resetStats">Reset Statistics</button>
-          </div>
-        </div>
-      </main>
-
+      <!-- Footer -->
       <footer class="footer">
-        <div class="footerText">PrivacyGuard • Options</div>
+        <span>PrivacyGuard v0.1.8</span>
+        <span class="footerDot">•</span>
+        <span>Built by <a href="https://templeenterprise.com" id="footerCompanyLink" class="companyLink">Temple
+            Enterprise LLC</a></span>
       </footer>
-    </div>
+    </main>
+  </div>
 
-    <script src="../common/constants.js"></script>
-    <script src="../common/runtime_api.js"></script>
-    <script src="../../assets/vendor/particles.js"></script>
-    <script src="options.js"></script>
-  </body>
+  <script src="../common/constants.js"></script>
+  <script src="../../assets/vendor/particles.js"></script>
+  <script src="options.js"></script>
+</body>
+
 </html>

@@ -1,31 +1,143 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>PrivacyGuard</title>
-    <link rel="stylesheet" href="popup.css" />
-  </head>
-  <body>
-    <div id="pgParticles" aria-hidden="true"></div>
 
-    <div class="wrap">
-      <div class="top">
-        <div class="title">PrivacyGuard | v0.1.7</div>
-        <div id="statusPill" class="pill">OFF</div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PrivacyGuard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+  <div id="pgParticles" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <!-- Header -->
+    <div class="top">
+      <div class="titleGroup">
+        <div class="title">PrivacyGuard</div>
+        <div class="version">v0.1.8</div>
       </div>
-
-      <button id="masterBtn" class="master" type="button" aria-pressed="false">
-        <img id="masterIcon" class="masterIcon" alt="PrivacyGuard status" />
-      </button>
-
-      <div id="popupStats" class="popupStats" aria-live="polite"></div>
-      <button id="openOptions" class="btn" type="button">Open Options</button>
+      <div id="statusPill" class="pill off">
+        <span class="pillDot"></span>
+        <span class="pillText">OFF</span>
+      </div>
     </div>
 
-    <script src="../common/constants.js"></script>
-    <script src="../common/runtime_api.js"></script>
-    <script src="../../assets/vendor/particles.js"></script>
-    <script src="popup.js"></script>
-  </body>
+    <!-- Master Toggle -->
+    <button id="masterBtn" class="master" type="button" aria-pressed="false"
+      aria-label="Toggle PrivacyGuard protection">
+      <div class="masterGlow" id="masterGlow"></div>
+      <img id="masterIcon" class="masterIcon" alt="PrivacyGuard status" />
+    </button>
+
+    <!-- Stats Grid -->
+    <div id="popupStats" class="statsGrid" aria-live="polite">
+      <div class="statItem">
+        <div class="statIcon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+          </svg>
+        </div>
+        <div class="statValue" id="statAds">0</div>
+        <div class="statLabel">Ads</div>
+      </div>
+      <div class="statItem">
+        <div class="statIcon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </div>
+        <div class="statValue" id="statTrackers">0</div>
+        <div class="statLabel">Trackers</div>
+      </div>
+      <div class="statItem">
+        <div class="statIcon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <div class="statValue" id="statFingerprints">0</div>
+        <div class="statLabel">Fingerprints</div>
+      </div>
+      <div class="statItem">
+        <div class="statIcon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </div>
+        <div class="statValue" id="statCookies">0</div>
+        <div class="statLabel">Cookies</div>
+      </div>
+    </div>
+
+    <!-- Quick Toggles -->
+    <div class="quickToggles">
+      <button id="qtAds" class="qt" type="button" data-feature="blockAds" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+        </svg>
+        <span>Ads</span>
+      </button>
+      <button id="qtHTTPS" class="qt" type="button" data-feature="alwaysHTTPS" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <span>HTTPS</span>
+      </button>
+      <button id="qtTrackers" class="qt" type="button" data-feature="blockTrackers" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <span>Trackers</span>
+      </button>
+      <button id="qtCookies" class="qt" type="button" data-feature="blockThirdPartyCookies" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+        <span>Cookies</span>
+      </button>
+    </div>
+
+    <!-- Open Options -->
+    <button id="openOptions" class="btn" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+      <span>Open Settings</span>
+    </button>
+
+    <!-- Footer -->
+    <div class="footer">
+      Built by <a href="https://templeenterprise.com" id="footerLink" class="footerLink">Temple Enterprise LLC</a>
+    </div>
+  </div>
+
+  <script src="../common/constants.js"></script>
+  <script src="../../assets/vendor/particles.js"></script>
+  <script src="popup.js"></script>
+</body>
+
 </html>

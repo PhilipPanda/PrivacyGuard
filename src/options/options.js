@@ -1,116 +1,169 @@
+/* ═══════════════════════════════════════════════════
+   PrivacyGuard — Options Page Script
+   ═══════════════════════════════════════════════════ */
+
+/* ── Settings Helpers ── */
 async function pgGetSettings() {
-  return pgApiGetSettings();
+  const res = await browser.runtime.sendMessage({
+    type: PrivacyGuardConstants.MSG.GET_SETTINGS
+  });
+  return res.settings || {};
 }
 
 async function pgSaveOptions(changes) {
-  await pgApiSetSettings(changes);
+  await browser.runtime.sendMessage({
+    type: PrivacyGuardConstants.MSG.SET_SETTINGS,
+    settings: changes
+  });
+  pgShowToast("Settings saved");
 }
 
 async function pgGetAdblockStatus() {
-  const res = await pgSendMessage({
+  const res = await browser.runtime.sendMessage({
     type: PrivacyGuardConstants.MSG.ADBLOCK_GET_STATUS
   });
   return res.status || null;
 }
 
 async function pgUpdateAdblockLists() {
-  const res = await pgSendMessage({
+  const res = await browser.runtime.sendMessage({
     type: PrivacyGuardConstants.MSG.ADBLOCK_UPDATE
   });
   return res.status || null;
 }
 
+/* ── Toast Notifications ── */
+function pgShowToast(message) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("toastOut");
+    toast.addEventListener("animationend", () => toast.remove());
+  }, 2200);
+}
+
+/* ── Sidebar Navigation ── */
+function pgInitSidebar() {
+  const navItems = document.querySelectorAll(".navItem");
+  const sections = document.querySelectorAll(".section");
+
+  navItems.forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = item.dataset.section;
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      navItems.forEach(n => n.classList.remove("active"));
+      item.classList.add("active");
+    });
+  });
+
+  // Highlight active nav on scroll
+  const mainContent = document.querySelector(".mainContent");
+  if (mainContent && sections.length) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navItems.forEach(n => {
+            n.classList.toggle("active", n.dataset.section === id);
+          });
+        }
+      });
+    }, { rootMargin: "-20% 0px -60% 0px", threshold: 0 });
+
+    sections.forEach(section => observer.observe(section));
+  }
+
+  // Company links
+  document.querySelectorAll("#sidebarCompanyLink, #footerCompanyLink").forEach(link => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      browser.tabs.create({ url: PrivacyGuardConstants.COMPANY_URL || "https://templeenterprise.com" });
+    });
+  });
+}
+
+/* ── Format Helpers ── */
 function pgFormatStatus(status) {
   if (!status) return "Adblock status unavailable.";
   const count = status.blockedDomains || 0;
   const allowCount = status.allowDomains || 0;
   const updated = status.lastUpdated ? new Date(status.lastUpdated).toLocaleString() : "never";
   const failures = status.sourcesFailed || 0;
-  const duration = status.lastDurationMs ? ` - ${Math.round(status.lastDurationMs).toLocaleString()}ms` : "";
-  const err = status.lastError ? ` - Error: ${status.lastError}` : "";
-  const failNote = failures ? ` - ${failures} source(s) failed` : "";
-  return `Blocked domains loaded: ${count.toLocaleString()} - Allowlist: ${allowCount.toLocaleString()} - Last updated: ${updated}${duration}${failNote}${err}`;
+  const duration = status.lastDurationMs ? ` • ${Math.round(status.lastDurationMs).toLocaleString()}ms` : "";
+  const err = status.lastError ? ` • Error: ${status.lastError}` : "";
+  const failNote = failures ? ` • ${failures} source(s) failed` : "";
+  return `${count.toLocaleString()} blocked domains • ${allowCount.toLocaleString()} allowed • Updated: ${updated}${duration}${failNote}${err}`;
 }
 
 function pgNormalizeHostLine(line) {
   if (!line) return null;
   let s = String(line).trim().toLowerCase();
   if (!s) return null;
-
   s = s.replace(/^https?:\/\//, "");
-  s = s.split("/")[0];
-  s = s.split("?")[0];
-  s = s.split("#")[0];
-  s = s.split(":")[0];
-
+  s = s.split("/")[0]; s = s.split("?")[0]; s = s.split("#")[0]; s = s.split(":")[0];
   if (!s.includes(".")) return null;
   if (!/^[a-z0-9.-]+$/.test(s)) return null;
   if (s.includes("..")) return null;
   if (s === "localhost" || s === "127.0.0.1" || s === "::1") return null;
-
   return s;
 }
 
 function pgParseDecoySites(text) {
   const lines = String(text || "").split(/\r?\n/);
-  const out = [];
-  const seen = new Set();
-
+  const out = []; const seen = new Set();
   for (const line of lines) {
     const host = pgNormalizeHostLine(line);
-    if (!host) continue;
-    if (seen.has(host)) continue;
-    seen.add(host);
-    out.push(host);
+    if (!host || seen.has(host)) continue;
+    seen.add(host); out.push(host);
   }
-
   return out;
 }
 
 function pgParseDomainList(text) {
   const lines = String(text || "").split(/\r?\n/);
-  const out = [];
-  const seen = new Set();
-
+  const out = []; const seen = new Set();
   for (const line of lines) {
     const cleaned = String(line || "").split("#")[0].trim();
     if (!cleaned) continue;
     const host = pgNormalizeHostLine(cleaned);
-    if (!host) continue;
-    if (seen.has(host)) continue;
-    seen.add(host);
-    out.push(host);
+    if (!host || seen.has(host)) continue;
+    seen.add(host); out.push(host);
   }
-
   return out;
 }
 
 function pgParseDurationToSeconds(input) {
   if (input === null || input === undefined) return null;
-
   const s = String(input).trim().toLowerCase();
   if (!s) return null;
-
   const m = s.match(/^(\d+)\s*([smhd])?$/i);
   if (!m) return null;
-
   const value = parseInt(m[1], 10);
   if (!Number.isFinite(value) || value < 0) return null;
-
   const unit = m[2] || "m";
   let mult = 60;
-
   if (unit === "s") mult = 1;
   if (unit === "m") mult = 60;
   if (unit === "h") mult = 3600;
   if (unit === "d") mult = 86400;
-
   return value * mult;
 }
 
 function pgFormatSecondsCanonical(sec) {
   sec = Math.max(0, Math.floor(sec));
-
   if (sec % 86400 === 0) return String(sec / 86400) + "d";
   if (sec % 3600 === 0) return String(sec / 3600) + "h";
   if (sec % 60 === 0) return String(sec / 60) + "m";
@@ -126,6 +179,7 @@ function clamp(n, min, max) {
   return n;
 }
 
+/* ── Particles ── */
 function pgInitParticles() {
   const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced) return;
@@ -133,13 +187,13 @@ function pgInitParticles() {
 
   window.particlesJS("pgParticles", {
     particles: {
-      number: { value: 42, density: { enable: true, value_area: 900 } },
+      number: { value: 35, density: { enable: true, value_area: 1000 } },
       color: { value: "#ffffff" },
       shape: { type: "circle" },
-      opacity: { value: 0.6, random: true },
-      size: { value: 2.1, random: true },
-      line_linked: { enable: true, distance: 160, color: "#ffffff", opacity: 0.4, width: 1 },
-      move: { enable: true, speed: 1.0, direction: "none", random: false, straight: false, out_mode: "out" }
+      opacity: { value: 0.35, random: true },
+      size: { value: 1.6, random: true },
+      line_linked: { enable: true, distance: 140, color: "#ffffff", opacity: 0.18, width: 0.8 },
+      move: { enable: true, speed: 0.5, direction: "none", random: false, straight: false, out_mode: "out" }
     },
     interactivity: {
       detect_on: "canvas",
@@ -149,155 +203,105 @@ function pgInitParticles() {
   });
 }
 
+/* ── Proxy Status ── */
 async function pgLoadProxyStatus() {
   const el = document.getElementById("proxyStatus");
   if (!el) return;
-
   try {
     const obj = await browser.storage.local.get("pg_proxy_status");
     const st = obj ? obj.pg_proxy_status : null;
-
-    if (!st) {
-      el.textContent = "Proxy status: unknown";
-      return;
-    }
-
+    if (!st) { el.textContent = "Proxy status: unknown"; return; }
     const when = st.at ? new Date(st.at).toLocaleString() : "unknown time";
     if (st.applied) {
       const detail = st.detail ? ` (${st.detail})` : "";
-      el.textContent = `Proxy status: applied • mode=${st.mode}${detail} • ${when}`;
+      el.textContent = `✓ Proxy applied • mode=${st.mode}${detail} • ${when}`;
     } else {
       const err = st.lastError ? ` • ${st.lastError}` : "";
-      el.textContent = `Proxy status: not applied • mode=${st.mode} • ${when}${err}`;
+      el.textContent = `✗ Proxy not applied • mode=${st.mode} • ${when}${err}`;
     }
   } catch (e) {
     el.textContent = "Proxy status: unknown";
   }
 }
 
+/* ── Load Options ── */
 async function pgLoadOptions() {
   const s = await pgGetSettings();
 
-  const enabledEl = document.getElementById("enabled");
-  if (enabledEl) enabledEl.checked = !!s.enabled;
+  const map = {
+    enabled: "enabled",
+    blockAds: "blockAds",
+    blockTrackers: "blockTrackers",
+    alwaysHTTPS: "alwaysHTTPS",
+    stripUTMParams: "stripUTMParams",
+    decoyTraffic: "decoyTraffic",
+    proxyEnabled: "proxyEnabled",
+    antiFingerprint: "antiFingerprint",
+    manageReferrer: "manageReferrer",
+    manageUserAgent: "manageUserAgent",
+    blockThirdPartyCookies: "blockThirdPartyCookies",
+    autoDeleteCookies: "autoDeleteCookies",
+    blockBeacons: "blockBeacons",
+    blockWebRTC: "blockWebRTC",
+    blockSocialWidgets: "blockSocialWidgets",
+    blockCryptoMiners: "blockCryptoMiners",
+    manageStorage: "manageStorage",
+    siteWhitelist: "siteWhitelist",
+    requestTimeout: "requestTimeout"
+  };
 
-  const blockAdsEl = document.getElementById("blockAds");
-  if (blockAdsEl) blockAdsEl.checked = !!s.blockAds;
-
-  const blockTrackersEl = document.getElementById("blockTrackers");
-  if (blockTrackersEl) blockTrackersEl.checked = !!s.blockTrackers;
-
-  const adblockCustomBlocklistEl = document.getElementById("adblockCustomBlocklist");
-  const adblockCustomAllowlistEl = document.getElementById("adblockCustomAllowlist");
-  const adblockDisabledSitesEl = document.getElementById("adblockDisabledSites");
-  const customBlocklist = Array.isArray(s.adblockCustomBlocklist) ? s.adblockCustomBlocklist : [];
-  const customAllowlist = Array.isArray(s.adblockCustomAllowlist) ? s.adblockCustomAllowlist : [];
-  const disabledSites = Array.isArray(s.adblockDisabledSites) ? s.adblockDisabledSites : [];
-  if (adblockCustomBlocklistEl) adblockCustomBlocklistEl.value = customBlocklist.join("\n");
-  if (adblockCustomAllowlistEl) adblockCustomAllowlistEl.value = customAllowlist.join("\n");
-  if (adblockDisabledSitesEl) adblockDisabledSitesEl.value = disabledSites.join("\n");
-
-  const alwaysHttpsEl = document.getElementById("alwaysHTTPS");
-  if (alwaysHttpsEl) alwaysHttpsEl.checked = !!s.alwaysHTTPS;
-
-  const stripEl = document.getElementById("stripUTMParams");
-  if (stripEl) stripEl.checked = !!s.stripUTMParams;
-
-  const decoyToggleEl = document.getElementById("decoyTraffic");
-  if (decoyToggleEl) decoyToggleEl.checked = !!s.decoyTraffic;
-
-  const minEl = document.getElementById("decoyMinInterval");
-  const maxEl = document.getElementById("decoyMaxInterval");
-  if (minEl) minEl.value = String(s.decoyMinInterval || PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMinInterval);
-  if (maxEl) maxEl.value = String(s.decoyMaxInterval || PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMaxInterval);
-
-  const sitesEl = document.getElementById("decoySites");
-  const sites = Array.isArray(s.decoySites) ? s.decoySites : [];
-  if (sitesEl) sitesEl.value = sites.join("\n");
-
-  const proxyEnabledEl = document.getElementById("proxyEnabled");
-  const proxyTypeEl = document.getElementById("proxyType");
-  const proxyHostEl = document.getElementById("proxyHost");
-  const proxyPortEl = document.getElementById("proxyPort");
-  const proxyUserEl = document.getElementById("proxyUsername");
-  const proxyPassEl = document.getElementById("proxyPassword");
-  const proxyDNSEl = document.getElementById("proxyDNS");
-
-  if (proxyEnabledEl) proxyEnabledEl.checked = !!s.proxyEnabled;
-  if (proxyTypeEl) proxyTypeEl.value = String(s.proxyType || "socks");
-  if (proxyHostEl) proxyHostEl.value = String(s.proxyHost || "");
-  if (proxyPortEl) proxyPortEl.value = String(s.proxyPort || 1080);
-  if (proxyUserEl) proxyUserEl.value = String(s.proxyUsername || "");
-  if (proxyPassEl) proxyPassEl.value = String(s.proxyPassword || "");
-  if (proxyDNSEl) proxyDNSEl.checked = !!s.proxyDNS;
-
-  const antiFpEl = document.getElementById("antiFingerprint");
-  if (antiFpEl) antiFpEl.checked = !!s.antiFingerprint;
-
-  const manageReferrerEl = document.getElementById("manageReferrer");
-  if (manageReferrerEl) manageReferrerEl.checked = !!s.manageReferrer;
-
-  const referrerModeEl = document.getElementById("referrerMode");
-  if (referrerModeEl) referrerModeEl.value = String(s.referrerMode || "no-referrer");
-
-  const manageUserAgentEl = document.getElementById("manageUserAgent");
-  if (manageUserAgentEl) manageUserAgentEl.checked = !!s.manageUserAgent;
-
-  const userAgentModeEl = document.getElementById("userAgentMode");
-  if (userAgentModeEl) {
-    userAgentModeEl.value = String(s.userAgentMode || "random");
-    const customContainer = document.getElementById("customUserAgentContainer");
-    if (customContainer) {
-      customContainer.style.display = userAgentModeEl.value === "custom" ? "block" : "none";
+  for (const [elId, key] of Object.entries(map)) {
+    const el = document.getElementById(elId);
+    if (el) {
+      if (key === "disableHyperlinkAuditing") {
+        el.checked = s[key] !== false;
+      } else {
+        el.checked = !!s[key];
+      }
     }
   }
-
-  const customUserAgentEl = document.getElementById("customUserAgent");
-  if (customUserAgentEl) customUserAgentEl.value = String(s.customUserAgent || "");
-
-  const blockThirdPartyCookiesEl = document.getElementById("blockThirdPartyCookies");
-  if (blockThirdPartyCookiesEl) blockThirdPartyCookiesEl.checked = !!s.blockThirdPartyCookies;
-
-  const autoDeleteCookiesEl = document.getElementById("autoDeleteCookies");
-  if (autoDeleteCookiesEl) autoDeleteCookiesEl.checked = !!s.autoDeleteCookies;
-
-  const cookieLifetimeEl = document.getElementById("cookieLifetime");
-  if (cookieLifetimeEl) cookieLifetimeEl.value = String(s.cookieLifetime || "7d");
-
-  const blockBeaconsEl = document.getElementById("blockBeacons");
-  if (blockBeaconsEl) blockBeaconsEl.checked = !!s.blockBeacons;
-
-  const blockWebRTCEl = document.getElementById("blockWebRTC");
-  if (blockWebRTCEl) blockWebRTCEl.checked = !!s.blockWebRTC;
-
-  const blockSocialWidgetsEl = document.getElementById("blockSocialWidgets");
-  if (blockSocialWidgetsEl) blockSocialWidgetsEl.checked = !!s.blockSocialWidgets;
-
-  const blockCryptoMinersEl = document.getElementById("blockCryptoMiners");
-  if (blockCryptoMinersEl) blockCryptoMinersEl.checked = !!s.blockCryptoMiners;
 
   const disableHyperlinkAuditingEl = document.getElementById("disableHyperlinkAuditing");
   if (disableHyperlinkAuditingEl) disableHyperlinkAuditingEl.checked = s.disableHyperlinkAuditing !== false;
 
-  const manageStorageEl = document.getElementById("manageStorage");
-  if (manageStorageEl) manageStorageEl.checked = !!s.manageStorage;
+  // Text/select fields
+  const fields = {
+    adblockCustomBlocklist: { val: (Array.isArray(s.adblockCustomBlocklist) ? s.adblockCustomBlocklist : []).join("\n") },
+    adblockCustomAllowlist: { val: (Array.isArray(s.adblockCustomAllowlist) ? s.adblockCustomAllowlist : []).join("\n") },
+    adblockDisabledSites: { val: (Array.isArray(s.adblockDisabledSites) ? s.adblockDisabledSites : []).join("\n") },
+    decoyMinInterval: { val: String(s.decoyMinInterval || PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMinInterval) },
+    decoyMaxInterval: { val: String(s.decoyMaxInterval || PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMaxInterval) },
+    decoySites: { val: (Array.isArray(s.decoySites) ? s.decoySites : []).join("\n") },
+    proxyType: { val: String(s.proxyType || "socks") },
+    proxyHost: { val: String(s.proxyHost || "") },
+    proxyPort: { val: String(s.proxyPort || 1080) },
+    proxyUsername: { val: String(s.proxyUsername || "") },
+    proxyPassword: { val: String(s.proxyPassword || "") },
+    referrerMode: { val: String(s.referrerMode || "no-referrer") },
+    userAgentMode: { val: String(s.userAgentMode || "random") },
+    customUserAgent: { val: String(s.customUserAgent || "") },
+    cookieLifetime: { val: String(s.cookieLifetime || "7d") },
+    storageMode: { val: String(s.storageMode || "clear-on-close") },
+    whitelistedSites: { val: (Array.isArray(s.whitelistedSites) ? s.whitelistedSites : []).join("\n") },
+    requestTimeoutMs: { val: String(s.requestTimeoutMs || 30000) }
+  };
 
-  const storageModeEl = document.getElementById("storageMode");
-  if (storageModeEl) storageModeEl.value = String(s.storageMode || "clear-on-close");
+  for (const [id, cfg] of Object.entries(fields)) {
+    const el = document.getElementById(id);
+    if (el) el.value = cfg.val;
+  }
 
-  const siteWhitelistEl = document.getElementById("siteWhitelist");
-  if (siteWhitelistEl) siteWhitelistEl.checked = !!s.siteWhitelist;
+  const proxyDNSEl = document.getElementById("proxyDNS");
+  if (proxyDNSEl) proxyDNSEl.checked = !!s.proxyDNS;
 
-  const whitelistedSitesEl = document.getElementById("whitelistedSites");
-  const whitelistedSites = Array.isArray(s.whitelistedSites) ? s.whitelistedSites : [];
-  if (whitelistedSitesEl) whitelistedSitesEl.value = whitelistedSites.join("\n");
+  // Custom UASM visibility
+  const uamEl = document.getElementById("userAgentMode");
+  const customContainer = document.getElementById("customUserAgentContainer");
+  if (uamEl && customContainer) {
+    customContainer.style.display = uamEl.value === "custom" ? "block" : "none";
+  }
 
-  const requestTimeoutEl = document.getElementById("requestTimeout");
-  if (requestTimeoutEl) requestTimeoutEl.checked = !!s.requestTimeout;
-
-  const requestTimeoutMsEl = document.getElementById("requestTimeoutMs");
-  if (requestTimeoutMsEl) requestTimeoutMsEl.value = String(s.requestTimeoutMs || 30000);
-
+  // Adblock status
   const statusEl = document.getElementById("adblockStatus");
   if (statusEl) {
     const st = await pgGetAdblockStatus();
@@ -308,37 +312,29 @@ async function pgLoadOptions() {
   await pgLoadPrivacyStats();
 }
 
+/* ── Privacy Stats ── */
 async function pgLoadPrivacyStats() {
   const statsEl = document.getElementById("privacyStats");
   if (!statsEl) return;
-
   try {
-    const res = await pgSendMessage({ type: "GET_STATS" });
+    const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
     if (res && res.stats) {
-      const stats = res.stats;
-      const total = (stats.blockedAds || 0) +
-                    (stats.blockedBeacons || 0) +
-                    (stats.blockedCookies || 0) +
-                    (stats.blockedFingerprints || 0) +
-                    (stats.blockedTrackers || 0) +
-                    (stats.blockedCryptominers || 0);
-
-      const lastReset = stats.lastReset ? new Date(stats.lastReset).toLocaleString() : "never";
-
-      const lines = [
-        `Total Blocked: ${total.toLocaleString()}`,
-        `Ads Blocked: ${(stats.blockedAds || 0).toLocaleString()}`,
-        `Trackers Blocked: ${(stats.blockedTrackers || 0).toLocaleString()}`,
-        `Beacons Blocked: ${(stats.blockedBeacons || 0).toLocaleString()}`,
-        `Cookies Blocked: ${(stats.blockedCookies || 0).toLocaleString()}`,
-        `Fingerprints Blocked: ${(stats.blockedFingerprints || 0).toLocaleString()}`,
-        `Crypto Miners Blocked: ${(stats.blockedCryptominers || 0).toLocaleString()}`,
-        `URLs Cleaned: ${(stats.cleanedUrls || 0).toLocaleString()}`,
-        `HTTPS Upgrades: ${(stats.upgradedHttps || 0).toLocaleString()}`,
-        `Last reset: ${lastReset}`
-      ];
-      statsEl.textContent = lines.join("\n");
-      statsEl.style.whiteSpace = "pre-line";
+      const s = res.stats;
+      const total = (s.blockedAds || 0) + (s.blockedBeacons || 0) + (s.blockedCookies || 0) +
+        (s.blockedFingerprints || 0) + (s.blockedTrackers || 0) + (s.blockedCryptominers || 0);
+      const lastReset = s.lastReset ? new Date(s.lastReset).toLocaleString() : "never";
+      statsEl.innerHTML = `
+        <div><strong>Total Blocked:</strong> ${total.toLocaleString()}</div>
+        <div><strong>Ads:</strong> ${(s.blockedAds || 0).toLocaleString()}</div>
+        <div><strong>Trackers:</strong> ${(s.blockedTrackers || 0).toLocaleString()}</div>
+        <div><strong>Beacons:</strong> ${(s.blockedBeacons || 0).toLocaleString()}</div>
+        <div><strong>Cookies:</strong> ${(s.blockedCookies || 0).toLocaleString()}</div>
+        <div><strong>Fingerprints:</strong> ${(s.blockedFingerprints || 0).toLocaleString()}</div>
+        <div><strong>Crypto Miners:</strong> ${(s.blockedCryptominers || 0).toLocaleString()}</div>
+        <div><strong>URLs Cleaned:</strong> ${(s.cleanedUrls || 0).toLocaleString()}</div>
+        <div><strong>HTTPS Upgrades:</strong> ${(s.upgradedHttps || 0).toLocaleString()}</div>
+        <div style="grid-column:1/-1;margin-top:6px;font-size:10px;opacity:.5">Last reset: ${lastReset}</div>
+      `;
     } else {
       statsEl.textContent = "Statistics unavailable";
     }
@@ -348,46 +344,65 @@ async function pgLoadPrivacyStats() {
   }
 }
 
+/* ── Clear Cookies ── */
 async function pgClearAllCookies() {
   if (browser.browsingData && typeof browser.browsingData.remove === "function") {
     await browser.browsingData.remove({}, { cookies: true });
     return;
   }
-
   if (!browser.cookies || typeof browser.cookies.getAll !== "function") {
     throw new Error("cookies API unavailable");
   }
-
   const all = await browser.cookies.getAll({});
   const removals = [];
-
   for (const c of all) {
     const scheme = c.secure ? "https://" : "http://";
     const host = (c.domain || "").replace(/^\./, "");
     const url = scheme + host + (c.path || "/");
     removals.push(browser.cookies.remove({ url, name: c.name, storeId: c.storeId }).catch(() => null));
   }
-
   await Promise.all(removals);
 }
 
+/* ═══ Init ═══ */
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     pgInitParticles();
+    pgInitSidebar();
     await pgLoadOptions();
   } catch (e) {
     console.error("[PrivacyGuard] options: initialization failed", e);
   }
 
-  const enabledEl = document.getElementById("enabled");
-  if (enabledEl) enabledEl.addEventListener("change", (e) => pgSaveOptions({ enabled: e.target.checked }));
+  /* ── Toggle listeners ── */
+  const toggles = [
+    ["enabled", "enabled"],
+    ["blockAds", "blockAds"],
+    ["blockTrackers", "blockTrackers"],
+    ["alwaysHTTPS", "alwaysHTTPS"],
+    ["stripUTMParams", "stripUTMParams"],
+    ["decoyTraffic", "decoyTraffic"],
+    ["antiFingerprint", "antiFingerprint"],
+    ["manageReferrer", "manageReferrer"],
+    ["manageUserAgent", "manageUserAgent"],
+    ["blockThirdPartyCookies", "blockThirdPartyCookies"],
+    ["autoDeleteCookies", "autoDeleteCookies"],
+    ["blockBeacons", "blockBeacons"],
+    ["blockWebRTC", "blockWebRTC"],
+    ["blockSocialWidgets", "blockSocialWidgets"],
+    ["blockCryptoMiners", "blockCryptoMiners"],
+    ["disableHyperlinkAuditing", "disableHyperlinkAuditing"],
+    ["manageStorage", "manageStorage"],
+    ["siteWhitelist", "siteWhitelist"],
+    ["requestTimeout", "requestTimeout"]
+  ];
 
-  const blockAdsEl = document.getElementById("blockAds");
-  if (blockAdsEl) blockAdsEl.addEventListener("change", (e) => pgSaveOptions({ blockAds: e.target.checked }));
+  for (const [elId, key] of toggles) {
+    const el = document.getElementById(elId);
+    if (el) el.addEventListener("change", (e) => pgSaveOptions({ [key]: e.target.checked }));
+  }
 
-  const blockTrackersEl = document.getElementById("blockTrackers");
-  if (blockTrackersEl) blockTrackersEl.addEventListener("change", (e) => pgSaveOptions({ blockTrackers: e.target.checked }));
-
+  /* ── Adblock textareas ── */
   const adblockCustomBlocklistEl = document.getElementById("adblockCustomBlocklist");
   const adblockCustomAllowlistEl = document.getElementById("adblockCustomAllowlist");
   const adblockDisabledSitesEl = document.getElementById("adblockDisabledSites");
@@ -407,114 +422,106 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 600);
   }
 
-  if (adblockCustomBlocklistEl) {
-    adblockCustomBlocklistEl.addEventListener("input", scheduleAdblockSave);
-    adblockCustomBlocklistEl.addEventListener("blur", scheduleAdblockSave);
-  }
-  if (adblockCustomAllowlistEl) {
-    adblockCustomAllowlistEl.addEventListener("input", scheduleAdblockSave);
-    adblockCustomAllowlistEl.addEventListener("blur", scheduleAdblockSave);
-  }
-  if (adblockDisabledSitesEl) {
-    adblockDisabledSitesEl.addEventListener("input", scheduleAdblockSave);
-    adblockDisabledSitesEl.addEventListener("blur", scheduleAdblockSave);
-  }
+  [adblockCustomBlocklistEl, adblockCustomAllowlistEl, adblockDisabledSitesEl].forEach(el => {
+    if (el) {
+      el.addEventListener("input", scheduleAdblockSave);
+      el.addEventListener("blur", scheduleAdblockSave);
+    }
+  });
 
-  const alwaysHttpsEl = document.getElementById("alwaysHTTPS");
-  if (alwaysHttpsEl) alwaysHttpsEl.addEventListener("change", (e) => pgSaveOptions({ alwaysHTTPS: e.target.checked }));
-
-  const stripEl = document.getElementById("stripUTMParams");
-  if (stripEl) stripEl.addEventListener("change", (e) => pgSaveOptions({ stripUTMParams: e.target.checked }));
-
-  const decoyToggleEl = document.getElementById("decoyTraffic");
-  if (decoyToggleEl) decoyToggleEl.addEventListener("change", (e) => pgSaveOptions({ decoyTraffic: e.target.checked }));
-
-  const antiFpEl = document.getElementById("antiFingerprint");
-  if (antiFpEl) antiFpEl.addEventListener("change", (e) => pgSaveOptions({ antiFingerprint: e.target.checked }));
-
-  const manageReferrerEl = document.getElementById("manageReferrer");
-  if (manageReferrerEl) manageReferrerEl.addEventListener("change", (e) => pgSaveOptions({ manageReferrer: e.target.checked }));
-
+  /* ── Select changes ── */
   const referrerModeEl = document.getElementById("referrerMode");
   if (referrerModeEl) referrerModeEl.addEventListener("change", (e) => pgSaveOptions({ referrerMode: e.target.value }));
 
-  const manageUserAgentEl = document.getElementById("manageUserAgent");
-  if (manageUserAgentEl) manageUserAgentEl.addEventListener("change", (e) => pgSaveOptions({ manageUserAgent: e.target.checked }));
+  const storageModeEl = document.getElementById("storageMode");
+  if (storageModeEl) storageModeEl.addEventListener("change", (e) => pgSaveOptions({ storageMode: e.target.value }));
 
   const userAgentModeEl = document.getElementById("userAgentMode");
   if (userAgentModeEl) {
     userAgentModeEl.addEventListener("change", (e) => {
       const customContainer = document.getElementById("customUserAgentContainer");
-      if (customContainer) {
-        customContainer.style.display = e.target.value === "custom" ? "block" : "none";
-      }
+      if (customContainer) customContainer.style.display = e.target.value === "custom" ? "block" : "none";
       pgSaveOptions({ userAgentMode: e.target.value });
     });
   }
 
   const customUserAgentEl = document.getElementById("customUserAgent");
   if (customUserAgentEl) {
-    customUserAgentEl.addEventListener("blur", (e) => {
-      pgSaveOptions({ customUserAgent: e.target.value });
+    let cuaTimer = null;
+    customUserAgentEl.addEventListener("input", () => {
+      clearTimeout(cuaTimer);
+      cuaTimer = setTimeout(() => pgSaveOptions({ customUserAgent: customUserAgentEl.value }), 600);
     });
-    customUserAgentEl.addEventListener("input", (e) => {
-      clearTimeout(customUserAgentEl.saveTimer);
-      customUserAgentEl.saveTimer = setTimeout(() => {
-        pgSaveOptions({ customUserAgent: e.target.value });
-      }, 600);
-    });
+    customUserAgentEl.addEventListener("blur", () => pgSaveOptions({ customUserAgent: customUserAgentEl.value }));
   }
 
-  const blockThirdPartyCookiesEl = document.getElementById("blockThirdPartyCookies");
-  if (blockThirdPartyCookiesEl) blockThirdPartyCookiesEl.addEventListener("change", (e) => pgSaveOptions({ blockThirdPartyCookies: e.target.checked }));
-
-  const autoDeleteCookiesEl = document.getElementById("autoDeleteCookies");
-  if (autoDeleteCookiesEl) autoDeleteCookiesEl.addEventListener("change", (e) => pgSaveOptions({ autoDeleteCookies: e.target.checked }));
-
+  /* ── Cookie lifetime ── */
   const cookieLifetimeEl = document.getElementById("cookieLifetime");
   if (cookieLifetimeEl) {
-    cookieLifetimeEl.addEventListener("blur", (e) => {
-      const lifetime = e.target.value.trim();
-      if (lifetime) {
-        pgSaveOptions({ cookieLifetime: lifetime });
-      }
-    });
-    cookieLifetimeEl.addEventListener("change", (e) => {
-      const lifetime = e.target.value.trim();
-      if (lifetime) {
-        pgSaveOptions({ cookieLifetime: lifetime });
-      }
-    });
+    const saveCL = () => {
+      const lifetime = cookieLifetimeEl.value.trim();
+      if (lifetime) pgSaveOptions({ cookieLifetime: lifetime });
+    };
+    cookieLifetimeEl.addEventListener("blur", saveCL);
+    cookieLifetimeEl.addEventListener("change", saveCL);
   }
 
-  const blockBeaconsEl = document.getElementById("blockBeacons");
-  if (blockBeaconsEl) blockBeaconsEl.addEventListener("change", (e) => pgSaveOptions({ blockBeacons: e.target.checked }));
+  /* ── Request timeout ── */
+  const requestTimeoutMsEl = document.getElementById("requestTimeoutMs");
+  if (requestTimeoutMsEl) {
+    const saveRT = () => {
+      const ms = clamp(Number(requestTimeoutMsEl.value) || 30000, 1000, 300000);
+      requestTimeoutMsEl.value = String(ms);
+      pgSaveOptions({ requestTimeoutMs: ms });
+    };
+    requestTimeoutMsEl.addEventListener("change", saveRT);
+    requestTimeoutMsEl.addEventListener("blur", saveRT);
+  }
 
-  const blockWebRTCEl = document.getElementById("blockWebRTC");
-  if (blockWebRTCEl) blockWebRTCEl.addEventListener("change", (e) => pgSaveOptions({ blockWebRTC: e.target.checked }));
+  /* ── Decoy intervals ── */
+  const minEl = document.getElementById("decoyMinInterval");
+  const maxEl = document.getElementById("decoyMaxInterval");
 
-  const blockSocialWidgetsEl = document.getElementById("blockSocialWidgets");
-  if (blockSocialWidgetsEl) blockSocialWidgetsEl.addEventListener("change", (e) => pgSaveOptions({ blockSocialWidgets: e.target.checked }));
+  async function saveIntervals() {
+    if (!minEl || !maxEl) return;
+    let minSec = pgParseDurationToSeconds(minEl.value);
+    let maxSec = pgParseDurationToSeconds(maxEl.value);
+    if (minSec === null) minSec = pgParseDurationToSeconds(PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMinInterval);
+    if (maxSec === null) maxSec = pgParseDurationToSeconds(PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMaxInterval);
+    minSec = clamp(minSec, PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS);
+    maxSec = clamp(maxSec, PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS);
+    if (maxSec < minSec) maxSec = minSec;
+    minEl.value = pgFormatSecondsCanonical(minSec);
+    maxEl.value = pgFormatSecondsCanonical(maxSec);
+    await pgSaveOptions({ decoyMinInterval: minEl.value, decoyMaxInterval: maxEl.value });
+  }
 
-  const blockCryptoMinersEl = document.getElementById("blockCryptoMiners");
-  if (blockCryptoMinersEl) blockCryptoMinersEl.addEventListener("change", (e) => pgSaveOptions({ blockCryptoMiners: e.target.checked }));
+  if (minEl && maxEl) {
+    minEl.addEventListener("change", saveIntervals);
+    maxEl.addEventListener("change", saveIntervals);
+    minEl.addEventListener("blur", saveIntervals);
+    maxEl.addEventListener("blur", saveIntervals);
+  }
 
-  const disableHyperlinkAuditingEl = document.getElementById("disableHyperlinkAuditing");
-  if (disableHyperlinkAuditingEl) disableHyperlinkAuditingEl.addEventListener("change", (e) => pgSaveOptions({ disableHyperlinkAuditing: e.target.checked }));
+  /* ── Decoy sites ── */
+  const sitesEl = document.getElementById("decoySites");
+  let sitesSaveTimer = null;
+  if (sitesEl) {
+    const scheduleSitesSave = () => {
+      clearTimeout(sitesSaveTimer);
+      sitesSaveTimer = setTimeout(async () => {
+        await pgSaveOptions({ decoySites: pgParseDecoySites(sitesEl.value) });
+      }, 600);
+    };
+    sitesEl.addEventListener("input", scheduleSitesSave);
+    sitesEl.addEventListener("blur", scheduleSitesSave);
+  }
 
-  const manageStorageEl = document.getElementById("manageStorage");
-  if (manageStorageEl) manageStorageEl.addEventListener("change", (e) => pgSaveOptions({ manageStorage: e.target.checked }));
-
-  const storageModeEl = document.getElementById("storageMode");
-  if (storageModeEl) storageModeEl.addEventListener("change", (e) => pgSaveOptions({ storageMode: e.target.value }));
-
-  const siteWhitelistEl = document.getElementById("siteWhitelist");
-  if (siteWhitelistEl) siteWhitelistEl.addEventListener("change", (e) => pgSaveOptions({ siteWhitelist: e.target.checked }));
-
+  /* ── Whitelist ── */
   const whitelistedSitesEl = document.getElementById("whitelistedSites");
   let whitelistSaveTimer = null;
   if (whitelistedSitesEl) {
-    function scheduleWhitelistSave() {
+    const scheduleWhitelistSave = () => {
       clearTimeout(whitelistSaveTimer);
       whitelistSaveTimer = setTimeout(async () => {
         const text = whitelistedSitesEl.value || "";
@@ -525,85 +532,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }).filter(d => d && d.includes("."));
         await pgSaveOptions({ whitelistedSites: normalized });
       }, 600);
-    }
+    };
     whitelistedSitesEl.addEventListener("input", scheduleWhitelistSave);
     whitelistedSitesEl.addEventListener("blur", scheduleWhitelistSave);
   }
 
-  const requestTimeoutEl = document.getElementById("requestTimeout");
-  if (requestTimeoutEl) requestTimeoutEl.addEventListener("change", (e) => pgSaveOptions({ requestTimeout: e.target.checked }));
-
-  const requestTimeoutMsEl = document.getElementById("requestTimeoutMs");
-  if (requestTimeoutMsEl) {
-    requestTimeoutMsEl.addEventListener("change", (e) => {
-      const ms = clamp(Number(e.target.value) || 30000, 1000, 300000);
-      e.target.value = String(ms);
-      pgSaveOptions({ requestTimeoutMs: ms });
-    });
-    requestTimeoutMsEl.addEventListener("blur", (e) => {
-      const ms = clamp(Number(e.target.value) || 30000, 1000, 300000);
-      e.target.value = String(ms);
-      pgSaveOptions({ requestTimeoutMs: ms });
-    });
-  }
-
-  const minEl = document.getElementById("decoyMinInterval");
-  const maxEl = document.getElementById("decoyMaxInterval");
-
-  async function saveIntervals() {
-    if (!minEl || !maxEl) return;
-
-    let minSec = pgParseDurationToSeconds(minEl.value);
-    let maxSec = pgParseDurationToSeconds(maxEl.value);
-
-    if (minSec === null) minSec = pgParseDurationToSeconds(PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMinInterval);
-    if (maxSec === null) maxSec = pgParseDurationToSeconds(PrivacyGuardConstants.DEFAULT_SETTINGS.decoyMaxInterval);
-
-    minSec = clamp(
-      minSec, 
-      PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, 
-      PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS
-    );
-    maxSec = clamp(
-      maxSec, 
-      PrivacyGuardConstants.DECOY_MIN_INTERVAL_SECONDS, 
-      PrivacyGuardConstants.DECOY_MAX_INTERVAL_SECONDS
-    );
-    if (maxSec < minSec) maxSec = minSec;
-
-    const minCanonical = pgFormatSecondsCanonical(minSec);
-    const maxCanonical = pgFormatSecondsCanonical(maxSec);
-
-    minEl.value = minCanonical;
-    maxEl.value = maxCanonical;
-
-    await pgSaveOptions({ decoyMinInterval: minCanonical, decoyMaxInterval: maxCanonical });
-  }
-
-  if (minEl && maxEl) {
-    minEl.addEventListener("change", saveIntervals);
-    maxEl.addEventListener("change", saveIntervals);
-    minEl.addEventListener("blur", saveIntervals);
-    maxEl.addEventListener("blur", saveIntervals);
-  }
-
-  const sitesEl = document.getElementById("decoySites");
-  let sitesSaveTimer = null;
-
-  function scheduleSitesSave() {
-    if (!sitesEl) return;
-    clearTimeout(sitesSaveTimer);
-    sitesSaveTimer = setTimeout(async () => {
-      const parsed = pgParseDecoySites(sitesEl.value);
-      await pgSaveOptions({ decoySites: parsed });
-    }, 600);
-  }
-
-  if (sitesEl) {
-    sitesEl.addEventListener("input", scheduleSitesSave);
-    sitesEl.addEventListener("blur", scheduleSitesSave);
-  }
-
+  /* ── Proxy ── */
   const proxyEnabledEl = document.getElementById("proxyEnabled");
   const proxyTypeEl = document.getElementById("proxyType");
   const proxyHostEl = document.getElementById("proxyHost");
@@ -620,19 +554,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = proxyUserEl ? String(proxyUserEl.value || "") : "";
     const pass = proxyPassEl ? String(proxyPassEl.value || "") : "";
     const dns = proxyDNSEl ? !!proxyDNSEl.checked : true;
-
     if (proxyPortEl) proxyPortEl.value = String(port);
-
     await pgSaveOptions({
-      proxyEnabled: enabled,
-      proxyType: type,
-      proxyHost: host,
-      proxyPort: port,
-      proxyUsername: user,
-      proxyPassword: pass,
-      proxyDNS: dns
+      proxyEnabled: enabled, proxyType: type, proxyHost: host,
+      proxyPort: port, proxyUsername: user, proxyPassword: pass, proxyDNS: dns
     });
-
     setTimeout(pgLoadProxyStatus, 350);
   }
 
@@ -644,9 +570,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (proxyPassEl) proxyPassEl.addEventListener("blur", saveProxy);
   if (proxyDNSEl) proxyDNSEl.addEventListener("change", saveProxy);
 
+  /* ── Adblock actions ── */
   const refreshBtn = document.getElementById("refreshAdblock");
   const statusEl = document.getElementById("adblockStatus");
-
   if (refreshBtn && statusEl) {
     refreshBtn.addEventListener("click", async () => {
       refreshBtn.disabled = true;
@@ -654,6 +580,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const st = await pgUpdateAdblockLists();
         statusEl.textContent = pgFormatStatus(st);
+        pgShowToast("Blocklists updated");
       } catch (e) {
         statusEl.textContent = "Update failed.";
       } finally {
@@ -663,28 +590,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const openTestBtn = document.getElementById("openCanYouBlockIt");
-  if (openTestBtn) openTestBtn.addEventListener("click", async () => browser.tabs.create({ url: "https://canyoublockit.com/extreme-test/" }));
+  if (openTestBtn) openTestBtn.addEventListener("click", () => browser.tabs.create({ url: "https://canyoublockit.com/extreme-test/" }));
 
+  /* ── Clear Cookies ── */
   const clearCookiesBtn = document.getElementById("clearCookies");
   if (clearCookiesBtn) {
     clearCookiesBtn.addEventListener("click", async () => {
       const ok = confirm("Clear ALL cookies?\n\nThis will sign you out of most websites.");
       if (!ok) return;
-
       clearCookiesBtn.disabled = true;
-
       try {
         await pgClearAllCookies();
-        alert("Cookies cleared.");
+        pgShowToast("All cookies cleared");
       } catch (e) {
         console.error("Clear cookies failed:", e);
-        alert("Failed to clear cookies. Check console for details.");
+        alert("Failed to clear cookies.");
       } finally {
         clearCookiesBtn.disabled = false;
       }
     });
   }
 
+  /* ── Export/Import ── */
   const exportSettingsBtn = document.getElementById("exportSettings");
   if (exportSettingsBtn) {
     exportSettingsBtn.addEventListener("click", async () => {
@@ -697,6 +624,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         a.download = "privacyguard-settings-" + new Date().toISOString().slice(0, 10) + ".json";
         a.click();
         URL.revokeObjectURL(url);
+        pgShowToast("Settings exported");
       } catch (e) {
         console.error("[PrivacyGuard] export settings failed", e);
         alert("Failed to export settings.");
@@ -724,7 +652,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const merged = Object.assign({}, defaults, imported);
         await pgSaveOptions(merged);
         await pgLoadOptions();
-        alert("Settings imported successfully.");
+        pgShowToast("Settings imported successfully");
       } catch (err) {
         console.error("[PrivacyGuard] import settings failed", err);
         alert("Failed to import settings. Check that the file is valid JSON.");
@@ -733,16 +661,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  /* ── Reset Stats ── */
   const resetStatsBtn = document.getElementById("resetStats");
   if (resetStatsBtn) {
     resetStatsBtn.addEventListener("click", async () => {
       const ok = confirm("Reset all privacy statistics?\n\nThis will clear all counters.");
       if (!ok) return;
-
       resetStatsBtn.disabled = true;
       try {
-        await pgSendMessage({ type: "RESET_STATS" });
+        await browser.runtime.sendMessage({ type: "RESET_STATS" });
         await pgLoadPrivacyStats();
+        pgShowToast("Statistics reset");
       } catch (e) {
         console.error("[PrivacyGuard] options: failed to reset stats", e);
         alert("Failed to reset statistics.");
@@ -752,17 +681,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  /* ── Storage change listeners ── */
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
-    if (changes.pg_proxy_status) {
-      pgLoadProxyStatus().catch(e => {
-        console.error("[PrivacyGuard] options: failed to reload proxy status", e);
-      });
-    }
-    if (changes.pg_privacy_stats) {
-      pgLoadPrivacyStats().catch(e => {
-        console.error("[PrivacyGuard] options: failed to reload privacy stats", e);
-      });
-    }
+    if (changes.pg_proxy_status) pgLoadProxyStatus().catch(() => { });
+    if (changes.pg_privacy_stats) pgLoadPrivacyStats().catch(() => { });
   });
 });

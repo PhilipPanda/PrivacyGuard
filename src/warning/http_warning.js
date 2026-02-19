@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             alert("Could not convert URL to HTTPS.");
             return;
           }
-          
+
           if (Number.isFinite(tabId) && tabId >= 0) {
             await browser.tabs.update(tabId, { url: httpsUrl });
           }
@@ -97,6 +97,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.error("[PrivacyGuard] http_warning: continue handler failed", e);
           alert("Failed to continue. Please try again.");
         }
+      });
+    }
+
+    const companyLink = document.getElementById("companyLink");
+    if (companyLink) {
+      companyLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        browser.tabs.create({ url: PrivacyGuardConstants.COMPANY_URL || "https://templeenterprise.com" });
       });
     }
   } catch (e) {

@@ -1,9 +1,10 @@
 var PrivacyGuardConstants = {
   STORAGE_KEY: "settings",
-  STORAGE_SCHEMA_KEY: "settings_schema_version",
-  
-  VERSION: "0.1.7",
+
+  VERSION: "0.1.8",
   EXTENSION_NAME: "PrivacyGuard",
+  COMPANY_NAME: "Temple Enterprise LLC",
+  COMPANY_URL: "https://templeenterprise.com",
 
   DEFAULT_SETTINGS: {
     enabled: true,
@@ -49,21 +50,21 @@ var PrivacyGuardConstants = {
 
     blockTrackers: false,
     blockThirdPartyCookies: false,
-    
+
     manageStorage: false,
     storageMode: "clear-on-close",
-    
+
     blockBeacons: false,
-    
+
     siteWhitelist: false,
     whitelistedSites: [],
-    
+
     requestTimeout: false,
     requestTimeoutMs: 30000,
-    
+
     autoDeleteCookies: false,
     cookieLifetime: "7d",
-    
+
     blockWebRTC: false,
 
     blockSocialWidgets: false,
@@ -100,9 +101,9 @@ var PrivacyGuardConstants = {
 
     HTTPWARN_ALLOW_ONCE: "HTTPWARN_ALLOW_ONCE"
   },
-  
+
   HTTP_WARN_BYPASS_TIMEOUT_MS: 30000, // 30 seconds
-  
+
   DECOY_REQUEST_TIMEOUT_MS: 8000, // 8 seconds
   DECOY_MIN_INTERVAL_SECONDS: 1,
   DECOY_MAX_INTERVAL_SECONDS: 7 * 86400, // 7 days

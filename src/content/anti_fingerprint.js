@@ -1,83 +1,237 @@
 (function() {
-  "use strict";
+  'use strict';
 
-  if (typeof browser === "undefined" || !browser.runtime || !browser.runtime.sendMessage) return;
-
-  init().catch(function() {
-    // Do not throw in page context.
-  });
-
-  async function init() {
-    var response = await browser.runtime.sendMessage({ type: "GET_SETTINGS" });
-    var settings = response && response.settings ? response.settings : null;
-    var enabled = !!(settings && settings.enabled && settings.antiFingerprint);
-    if (!enabled) return;
-
-    applyCanvasNoiseProtection();
-    applyTimingProtection();
-    applyHardwareProtection();
+  initAntiFingerprinting();
+  
+  if (typeof browser !== 'undefined' && browser.runtime) {
+    browser.runtime.sendMessage({
+      type: 'GET_SETTINGS'
+    }).then(response => {
+      if (response && response.settings) {
+        const shouldBeEnabled = !!(response.settings.enabled && response.settings.antiFingerprint);
+        if (!shouldBeEnabled) {
+          console.log("[PrivacyGuard] anti-fingerprinting disabled by settings");
+        }
+      }
+    }).catch(() => {
+    });
   }
 
-  function applyCanvasNoiseProtection() {
-    if (!window.HTMLCanvasElement || !window.CanvasRenderingContext2D) return;
-
-    var originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-    var originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
-
-    if (typeof originalToDataURL === "function") {
-      HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
-        pgAddCanvasNoise(this);
-        return originalToDataURL.call(this, type, quality);
-      };
-    }
-
-    if (typeof originalGetImageData === "function") {
-      CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {
-        var imageData = originalGetImageData.call(this, sx, sy, sw, sh);
-        pgMutateImageData(imageData);
-        return imageData;
-      };
+  function initAntiFingerprinting() {
+  
+  const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+  const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+  const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+  
+  function addCanvasNoise(canvas) {
+    try {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        if (Math.random() < 0.01) {
+          const noise = (Math.random() - 0.5) * 10;
+          data[i] = Math.min(255, Math.max(0, data[i] + noise));
+          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+        }
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+    } catch (e) {
     }
   }
-
-  function applyTimingProtection() {
-    if (!window.Performance || typeof Performance.now !== "function") return;
-    var originalNow = Performance.now;
-    Performance.now = function() {
-      return Math.floor(originalNow.call(performance));
+  
+  HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
+    addCanvasNoise(this);
+    return originalToDataURL.apply(this, arguments);
+  };
+  
+  HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {
+    addCanvasNoise(this);
+    return originalToBlob.apply(this, arguments);
+  };
+  
+  CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {
+    const imageData = originalGetImageData.apply(this, arguments);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      if (Math.random() < 0.01) {
+        const noise = (Math.random() - 0.5) * 10;
+        data[i] = Math.min(255, Math.max(0, data[i] + noise));
+        data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+        data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+      }
+    }
+    
+    return imageData;
+  };
+  
+  const getParameter = WebGLRenderingContext.prototype.getParameter;
+  WebGLRenderingContext.prototype.getParameter = function(parameter) {
+    if (parameter === 37445) {
+      return 'Intel Inc.';
+    }
+    if (parameter === 37446) {
+      return 'Intel Iris OpenGL Engine';
+    }
+    return getParameter.apply(this, arguments);
+  };
+  
+  const originalPerformanceNow = Performance.now;
+  Performance.now = function() {
+    return Math.floor(originalPerformanceNow.apply(this, arguments) / 100) * 100;
+  };
+  
+  if (navigator.getBattery) {
+    const originalGetBattery = navigator.getBattery;
+    navigator.getBattery = function() {
+      return originalGetBattery.apply(this, arguments).then(function(battery) {
+        const originalLevel = battery.level;
+        const originalCharging = battery.charging;
+        
+        Object.defineProperty(battery, 'level', {
+          get: function() {
+            return Math.round(originalLevel * 10) / 10;
+          }
+        });
+        
+        return battery;
+      });
     };
   }
-
-  function applyHardwareProtection() {
-    try {
-      var hcDescriptor = Object.getOwnPropertyDescriptor(Navigator.prototype, "hardwareConcurrency");
-      if (hcDescriptor && typeof hcDescriptor.get === "function") {
-        Object.defineProperty(Navigator.prototype, "hardwareConcurrency", {
-          get: function() {
-            var value = Number(hcDescriptor.get.call(this) || 4);
-            return Math.min(Math.max(2, value), 8);
-          },
-          configurable: true
-        });
-      }
-    } catch (_error) {}
-  }
-
-  function pgAddCanvasNoise(canvas) {
-    try {
-      var ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      pgMutateImageData(imageData);
-      ctx.putImageData(imageData, 0, 0);
-    } catch (_error) {}
-  }
-
-  function pgMutateImageData(imageData) {
-    if (!imageData || !imageData.data) return;
-    var data = imageData.data;
-    for (var i = 0; i < data.length; i += 64) {
-      data[i] = Math.min(255, data[i] + 1);
+  
+  const originalScreenWidth = Object.getOwnPropertyDescriptor(Screen.prototype, 'width');
+  const originalScreenHeight = Object.getOwnPropertyDescriptor(Screen.prototype, 'height');
+  
+  Object.defineProperty(Screen.prototype, 'width', {
+    get: function() {
+      const width = originalScreenWidth.get.apply(this);
+      return Math.floor(width / 10) * 10;
     }
+  });
+  
+  Object.defineProperty(Screen.prototype, 'height', {
+    get: function() {
+      const height = originalScreenHeight.get.apply(this);
+      return Math.floor(height / 10) * 10;
+    }
+  });
+  
+  const originalPluginsLength = Object.getOwnPropertyDescriptor(Navigator.prototype, 'plugins');
+  Object.defineProperty(navigator, 'plugins', {
+    get: function() {
+      const plugins = originalPluginsLength.get.apply(this);
+      return {
+        length: Math.min(plugins.length, 3),
+        item: function(index) {
+          return plugins.item ? plugins.item(index) : plugins[index] || null;
+        },
+        namedItem: function(name) {
+          return plugins.namedItem ? plugins.namedItem(name) : null;
+        },
+        refresh: function() {}
+      };
+    }
+  });
+  
+  if (document.fonts && document.fonts.check) {
+    const originalCheck = document.fonts.check;
+    document.fonts.check = function(font) {
+      const uncommonFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia'];
+      if (typeof font === 'string' && !uncommonFonts.some(f => font.includes(f))) {
+        return false;
+      }
+      return originalCheck.apply(this, arguments);
+    };
+  }
+  
+  const originalHardwareConcurrency = Object.getOwnPropertyDescriptor(Navigator.prototype, 'hardwareConcurrency');
+  Object.defineProperty(navigator, 'hardwareConcurrency', {
+    get: function() {
+      const cores = originalHardwareConcurrency.get.apply(this);
+      return Math.min(cores, 4);
+    }
+  });
+  
+  if (navigator.deviceMemory) {
+    const originalDeviceMemory = Object.getOwnPropertyDescriptor(Navigator.prototype, 'deviceMemory');
+    Object.defineProperty(navigator, 'deviceMemory', {
+      get: function() {
+        const memory = originalDeviceMemory.get.apply(this);
+        return Math.min(memory || 8, 8);
+      }
+    });
+  }
+  
+  const originalGetTimezoneOffset = Date.prototype.getTimezoneOffset;
+  Date.prototype.getTimezoneOffset = function() {
+    const offset = originalGetTimezoneOffset.apply(this);
+    return Math.floor(offset / 60) * 60;
+  };
+  
+  const originalCreateOffer = RTCPeerConnection.prototype.createOffer;
+  RTCPeerConnection.prototype.createOffer = function() {
+    return originalCreateOffer.apply(this, arguments).then(function(offer) {
+      if (offer.sdp) {
+        offer.sdp = offer.sdp.replace(/\d+\.\d+\.\d+\.\d+/g, '0.0.0.0');
+      }
+      return offer;
+    });
+  };
+
+  if (window.AudioContext || window.webkitAudioContext) {
+    const Orig = window.AudioContext || window.webkitAudioContext;
+    const Wrapped = function() {
+      let ctx;
+      if (arguments.length > 0) {
+        const Ctor = Orig.bind.apply(Orig, [null].concat([].slice.call(arguments)));
+        ctx = new Ctor();
+      } else {
+        ctx = new Orig();
+      }
+      const origCreateAnalyser = ctx.createAnalyser && ctx.createAnalyser.bind(ctx);
+      if (origCreateAnalyser) {
+        ctx.createAnalyser = function() {
+          const node = origCreateAnalyser();
+          if (node.getFloatFrequencyData) {
+            const orig = node.getFloatFrequencyData.bind(node);
+            node.getFloatFrequencyData = function(arr) {
+              orig(arr);
+              for (var i = 0; i < arr.length; i++) {
+                if (Math.random() < 0.02) arr[i] = arr[i] + (Math.random() - 0.5) * 2;
+              }
+            };
+          }
+          return node;
+        };
+      }
+      return ctx;
+    };
+    Wrapped.prototype = Orig.prototype;
+    if (window.AudioContext) window.AudioContext = Wrapped;
+    if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+  }
+
+  try {
+    if (document.fonts && document.fonts.forEach) {
+      var origForEach = document.fonts.forEach.bind(document.fonts);
+      document.fonts.forEach = function(cb) {
+        var count = 0;
+        origForEach(function(f) {
+          if (count < 12) {
+            count++;
+            cb(f);
+          }
+        });
+      };
+    }
+  } catch (e) {}
+
+    console.log("[PrivacyGuard] anti-fingerprinting content script initialized");
   }
 })();

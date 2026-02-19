@@ -1,14 +1,22 @@
 const PG_ICON_ON = "../../assets/icons/icon-1024-on.png";
 const PG_ICON_OFF = "../../assets/icons/icon-1024-off.png";
 
+/* ── Settings helpers ── */
 async function pgGetSettings() {
-  return pgApiGetSettings();
+  const res = await browser.runtime.sendMessage({
+    type: PrivacyGuardConstants.MSG.GET_SETTINGS
+  });
+  return res.settings || {};
 }
 
 async function pgSetSettings(changes) {
-  await pgApiSetSettings(changes);
+  await browser.runtime.sendMessage({
+    type: PrivacyGuardConstants.MSG.SET_SETTINGS,
+    settings: changes
+  });
 }
 
+/* ── Particles ── */
 function pgForceParticlesLayerPopup() {
   const p = document.getElementById("pgParticles");
   if (p) {
@@ -32,13 +40,13 @@ function pgInitParticlesPopup() {
 
   window.particlesJS("pgParticles", {
     particles: {
-      number: { value: 140, density: { enable: true, value_area: 650 } },
+      number: { value: 100, density: { enable: true, value_area: 600 } },
       color: { value: "#ffffff" },
       shape: { type: "circle" },
-      opacity: { value: 0.6, random: true },
-      size: { value: 2.0, random: true },
-      line_linked: { enable: true, distance: 110, color: "#ffffff", opacity: 0.35, width: 1 },
-      move: { enable: true, speed: 0.85, direction: "none", random: false, straight: false, out_mode: "out" }
+      opacity: { value: 0.4, random: true },
+      size: { value: 1.8, random: true },
+      line_linked: { enable: true, distance: 100, color: "#ffffff", opacity: 0.2, width: 0.8 },
+      move: { enable: true, speed: 0.6, direction: "none", random: false, straight: false, out_mode: "out" }
     },
     interactivity: {
       detect_on: "canvas",
@@ -48,12 +56,14 @@ function pgInitParticlesPopup() {
   });
 }
 
-
+/* ── UI State ── */
 function pgSetUIEnabled(isEnabled) {
   const pill = document.getElementById("statusPill");
   if (pill) {
-    pill.textContent = isEnabled ? "ACTIVE" : "OFF";
-    pill.style.opacity = isEnabled ? "1" : ".65";
+    const pillText = pill.querySelector(".pillText");
+    if (pillText) pillText.textContent = isEnabled ? "ACTIVE" : "OFF";
+    pill.classList.toggle("active", isEnabled);
+    pill.classList.toggle("off", !isEnabled);
   }
 
   const btn = document.getElementById("masterBtn");
@@ -70,27 +80,74 @@ function pgSetUIEnabled(isEnabled) {
   }
 }
 
+/* ── Quick Toggles ── */
+function pgUpdateQuickToggles(settings) {
+  const features = ["blockAds", "alwaysHTTPS", "blockTrackers", "blockThirdPartyCookies"];
+  const ids = ["qtAds", "qtHTTPS", "qtTrackers", "qtCookies"];
+
+  for (let i = 0; i < features.length; i++) {
+    const el = document.getElementById(ids[i]);
+    if (el) {
+      el.setAttribute("aria-pressed", settings[features[i]] ? "true" : "false");
+    }
+  }
+}
+
+/* ── Animated counter ── */
+function pgAnimateValue(el, end) {
+  if (!el) return;
+  const start = parseInt(el.textContent) || 0;
+  if (start === end) { el.textContent = end.toLocaleString(); return; }
+
+  const duration = 500;
+  const startTime = performance.now();
+
+  function update(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const current = Math.round(start + (end - start) * eased);
+    el.textContent = current.toLocaleString();
+    if (progress < 1) requestAnimationFrame(update);
+  }
+
+  requestAnimationFrame(update);
+}
+
+/* ── Stats ── */
+function pgUpdateStats(stats) {
+  if (!stats) return;
+
+  pgAnimateValue(document.getElementById("statAds"), stats.blockedAds || 0);
+  pgAnimateValue(document.getElementById("statTrackers"), (stats.blockedTrackers || 0));
+  pgAnimateValue(document.getElementById("statFingerprints"), stats.blockedFingerprints || 0);
+  pgAnimateValue(document.getElementById("statCookies"), (stats.blockedCookies || 0));
+}
+
+/* ── Load ── */
 async function pgLoadPopup() {
   const s = await pgGetSettings();
   pgSetUIEnabled(!!s.enabled);
+  pgUpdateQuickToggles(s);
+
   try {
-    const res = await pgSendMessage({ type: "GET_STATS" });
-    const statsEl = document.getElementById("popupStats");
-    if (statsEl && res && res.stats) {
-      const t = (res.stats.blockedAds || 0) + (res.stats.blockedBeacons || 0) + (res.stats.blockedCookies || 0) +
-                (res.stats.blockedFingerprints || 0) + (res.stats.blockedTrackers || 0) + (res.stats.blockedCryptominers || 0);
-      statsEl.textContent = t > 0 ? "Blocked: " + t.toLocaleString() : "";
-      statsEl.style.display = t > 0 ? "block" : "none";
+    const res = await browser.runtime.sendMessage({ type: "GET_STATS" });
+    if (res && res.stats) {
+      pgUpdateStats(res.stats);
     }
-  } catch (e) {}
+  } catch (e) {
+    // stats unavailable
+  }
 }
 
+/* ── Init ── */
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     pgForceParticlesLayerPopup();
     pgInitParticlesPopup();
     await pgLoadPopup();
 
+    /* Master toggle */
     const masterBtn = document.getElementById("masterBtn");
     if (masterBtn) {
       masterBtn.addEventListener("click", async () => {
@@ -106,6 +163,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
+    /* Quick toggles */
+    document.querySelectorAll(".qt").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          const feature = btn.dataset.feature;
+          if (!feature) return;
+          const s = await pgGetSettings();
+          const next = !s[feature];
+          await pgSetSettings({ [feature]: next });
+          btn.setAttribute("aria-pressed", next ? "true" : "false");
+        } catch (e) {
+          console.error("[PrivacyGuard] popup: quick toggle failed", e);
+        }
+      });
+    });
+
+    /* Open options */
     const openBtn = document.getElementById("openOptions");
     if (openBtn) {
       openBtn.addEventListener("click", async () => {
@@ -119,6 +193,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (e) {
           console.error("[PrivacyGuard] popup: failed to open options", e);
         }
+      });
+    }
+
+    /* Footer link */
+    const footerLink = document.getElementById("footerLink");
+    if (footerLink) {
+      footerLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        browser.tabs.create({ url: PrivacyGuardConstants.COMPANY_URL || "https://templeenterprise.com" });
       });
     }
   } catch (e) {
