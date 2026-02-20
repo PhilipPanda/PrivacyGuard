@@ -38,7 +38,6 @@
 <p align="center">
   <img src="github/images/popup.png" alt="PrivacyGuard Popup" width="360">
 </p>
-<p align="center"><em>Popup — Quick dashboard with stats, master toggle, and feature quick-toggles</em></p>
 
 ---
 
