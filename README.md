@@ -17,19 +17,19 @@
 
 ---
 
-## ✨ Features
+##  Features
 
 | Category | Features |
 |----------|----------|
-| 🚫 **Blocking** | Ad blocking, tracker blocking, crypto miner blocking, social widget blocking, web beacon blocking |
-| 🔒 **HTTPS** | Auto-upgrade HTTP → HTTPS, HTTP warning interstitial page |
-| 🔏 **Privacy** | Anti-fingerprinting, referrer control, user-agent spoofing, WebRTC leak protection |
-| 🍪 **Cookies** | Third-party cookie blocking, auto-delete cookies, hyperlink audit disabling |
-| 💾 **Storage** | localStorage/sessionStorage/IndexedDB management with multiple modes |
-| 🌐 **Network** | SOCKS5/HTTP/HTTPS proxy support, URL tracking parameter stripping, request timeout control |
-| 🎭 **Decoy Traffic** | Generate background requests to blend your browsing pattern |
-| 📊 **Statistics** | Track blocked ads, trackers, cookies, fingerprints, and more |
-| ⚙️ **Management** | Site whitelist, settings import/export, custom block & allow lists |
+|  **Blocking** | Ad blocking, tracker blocking, crypto miner blocking, social widget blocking, web beacon blocking |
+|  **HTTPS** | Auto-upgrade HTTP → HTTPS, HTTP warning interstitial page |
+|  **Privacy** | Anti-fingerprinting, referrer control, user-agent spoofing, WebRTC leak protection |
+|  **Cookies** | Third-party cookie blocking, auto-delete cookies, hyperlink audit disabling |
+|  **Storage** | localStorage/sessionStorage/IndexedDB management with multiple modes |
+|  **Network** | SOCKS5/HTTP/HTTPS proxy support, URL tracking parameter stripping, request timeout control |
+|  **Decoy Traffic** | Generate background requests to blend your browsing pattern |
+|  **Statistics** | Track blocked ads, trackers, cookies, fingerprints, and more |
+|  **Management** | Site whitelist, settings import/export, custom block & allow lists |
 
 ---
 
@@ -41,7 +41,7 @@
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Installation (Developer Mode)
 
