@@ -33,7 +33,7 @@
 
 ---
 
-## 📸 Showcase
+## Showcase
 
 <p align="center">
   <img src="github/images/popup.png" alt="PrivacyGuard Popup" width="360">
